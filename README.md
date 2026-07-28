@@ -45,17 +45,6 @@ project/
                                  #   known limitations (submitted deliverable)
 ```
 
-## Module Ownership (Dev 3)
-
-| File | Responsibility | Timetable slot |
-|---|---|---|
-| `card_catalog.py` | Load shared JSON card catalog; expose card lookups; validate `deck_list` (1–50 cards, all legal) → `ILLEGAL_DECK` | N2 |
-| `game_state.py` | Authoritative `GameState` data model (life, hand, battlefield, graveyard, library, stack) | N2 |
-| `state_view.py` | Per-player `GAME_STATE_UPDATE` view with hidden-hand filtering | N4 (done early) |
-| `priority.py` | `PRIORITY_GRANT`/`PRIORITY_PASS`, `seq_num` token validation, `STALE_ACTION` | N7 |
-| `stack.py` | LIFO stack, `STACK_PUSH`/`STACK_RESOLVE`, state-based actions | N7 |
-| `effects.py` | 5+ card effects, `PLAY_LAND`, mana payment, `INSUFFICIENT_MANA` | N8 |
-
 ## Setup
 
 ```bash
