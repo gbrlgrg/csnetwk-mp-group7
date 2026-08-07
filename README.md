@@ -233,10 +233,9 @@ TODO — one paragraph, in your own words. Template:
 
 | AI tool | Version / model | Used by | Access (free / paid / school) | What it was used for |
 |---|---|---|---|---|
-| TODO e.g. Claude Code | TODO e.g. Opus 5 | TODO members | TODO | TODO e.g. initial `server/` package scaffold, test scripts |
-| TODO e.g. ChatGPT | TODO | TODO | TODO | TODO e.g. explaining LIFO stack semantics, debugging framing bug |
-| TODO e.g. GitHub Copilot | TODO | TODO | TODO | TODO e.g. inline autocompletion while writing `client/main.py` |
-| *(none used)* | — | TODO member | — | Wrote assigned modules unaided |
+| Claude | Opus 5, Fable 5 | Gregorio, Barreo, Rebudiao | Free, Paid | Proper directory of the file architecture, Explanation of each task and how to implement it |
+| ChatGPT | GPT-5 | All members | Free | Explaining LIFO stack semantics, debugging framing bug |
+| GitHub Copilot | Multi-model | All members | Free | Inline assisted autocompletion and guidance while writing files |
 
 ### 3. Per-file AI involvement
 
@@ -244,7 +243,7 @@ Legend — **G** = AI generated the first draft, member reviewed/tested/edited �
 **A** = member wrote it, AI used only for debugging, refactoring, or
 explanation · **H** = hand-written, no AI involvement.
 
-| File | Level | Owner | What the AI did | What the member changed by hand |
+| File | Level (See Legend) | Owner | What the AI did | What the member changed by hand |
 |---|---|---|---|---|
 | `server/main.py` | TODO | Suñga | TODO | TODO |
 | `server/transport.py` | TODO | Suñga | TODO | TODO |
@@ -252,16 +251,16 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/lobby.py` | TODO | Rebudiao | TODO | TODO |
 | `server/phase_engine.py` | TODO | Rebudiao | TODO | TODO |
 | `server/combat.py` | TODO | Barreo | TODO | TODO |
-| `server/card_catalog.py` | TODO | Gregorio | TODO | TODO |
-| `server/game_state.py` | TODO | Gregorio | TODO | TODO |
-| `server/state_view.py` | TODO | Gregorio | TODO | TODO |
-| `server/priority.py` | TODO | Gregorio | TODO | TODO |
-| `server/stack.py` | TODO | Gregorio | TODO | TODO |
-| `server/effects.py` | TODO | Gregorio | TODO | TODO |
+| `server/card_catalog.py` | G | Gregorio | Needed functions/methods for the file | Implementation of the methods / how to call them |
+| `server/game_state.py` | A | Gregorio | The networking, Lobby, Combat, Stack resolution, Phase engine, Effects, Priority, Transport, and Client | Player state, Permanent management, Stack tracking, and Game-over/Disconnect Exceptions |
+| `server/state_view.py` | A | Gregorio | The data formatting and cleaning the broadcast_state helper | I did everything |
+| `server/priority.py` | A | Gregorio | Error-handling edge cases | I did everything |
+| `server/stack.py` | G | Gregorio | The initial structure and logic, which handles the LIFO stack — spell casting, target validation, stack resolution with fizzle checks, state-based actions, and APNAP trigger ordering |  you then fixed and debugged the edge cases like mana payment validation, sorcery-speed timing checks, and the trigger choice/order flows |
+| `server/effects.py` | G | Gregorio | Debugged Edge Cases like generic mana coverage checks and the countered-spell graveyard handling | I did all of the card effect logic |
 | `client/main.py` | TODO | Barreo | TODO | TODO |
 | `server/tests/*.py` | TODO | TODO | TODO | TODO |
 | `shared/cards.json`, `decks/*.txt` | TODO | TODO | TODO | TODO |
-| `README.md` | TODO | all | TODO | TODO |
+| `README.md` | G | all | General formatting of the whole README file | Fixed the TODO markings and grammar. |
 
 ### 4. What was **not** AI-generated
 
@@ -297,7 +296,7 @@ explain the rest of the codebase at the demo.
 |---|---|---|---|
 | John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | TODO | TODO |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO | TODO |
-| Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | TODO | ![Gregorio Signature](signatures/Gregorio%20Signature%20and%20Date.jpg) |
+| Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT |  |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO | TODO |
 
 ### 7. Prompt / session log (optional but recommended)
