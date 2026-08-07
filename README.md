@@ -296,7 +296,7 @@ explain the rest of the codebase at the demo.
 |---|---|---|---|
 | John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | TODO | TODO |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO | TODO |
-| Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT |  |
+| Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT | ![Gregorio Signature](signatures/Gregorio%20Signature%20and%20Date.jpg) |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO | TODO |
 
 ### 7. Prompt / session log (optional but recommended)
