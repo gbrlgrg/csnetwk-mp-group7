@@ -209,23 +209,15 @@ Member 3 = Gaibril Gregorio · Member 4 = TODO Carlo Barreo
 
 ## AI Usage Disclosure
 
-> **Fill this in truthfully before submission.** Every `TODO` below must be
-> replaced with what actually happened. Undisclosed AI use, or inability to
-> explain any part of the code at the demo, is treated as academic
-> dishonesty by the rubric. Delete rows that do not apply; do not delete
-> rows to hide usage.
-
 ### 1. Summary statement
 
-TODO — one paragraph, in your own words. Template:
-
-> AI assistance (TODO: tool names) was used during the development of this
-> machine problem, primarily for TODO (e.g. *generating an initial
-> implementation of the server package and client, drafting the test
-> scripts, and explaining RFC 0001 semantics*). All AI output was reviewed,
-> tested, and modified by the group. TODO (e.g. *the protocol design
-> decisions, the work split, the deck lists, and all debugging of the
-> phase/priority interaction were done by hand*). Every member has read
+> AI assistance (Claude, ChatGPT, GitHub Copilot) was used during the development of this
+> machine problem, primarily for extracting all requirements for the project,
+> generating a task delegation plan for four developers that follow the Work
+> Distribution Matrix, generating an initial
+> implementation of the server package and client, drafting test scripts, and
+> explaining other nuances in the specifications. All AI output was reviewed,
+> tested, and modified by the group. Every member has read
 > and can explain the modules attributed to them in the Work Distribution
 > Matrix above, and the group jointly reviewed all remaining modules.
 
@@ -233,7 +225,7 @@ TODO — one paragraph, in your own words. Template:
 
 | AI tool | Version / model | Used by | Access (free / paid / school) | What it was used for |
 |---|---|---|---|---|
-| Claude | Opus 5, Fable 5 | Gregorio, Barreo, Rebudiao | Free, Paid | Proper directory of the file architecture, Explanation of each task and how to implement it |
+| Claude | Opus 5, Fable 5 | All members| Free, Paid | Extracting an overview of the project requirements, Generating an organized task delegation plan, Proper directory of the file architecture, Explanation of each task and how to implement it |
 | ChatGPT | GPT-5 | All members | Free | Explaining LIFO stack semantics, debugging framing bug |
 | GitHub Copilot | Multi-model | All members | Free | Inline assisted autocompletion and guidance while writing files |
 
@@ -245,9 +237,9 @@ explanation · **H** = hand-written, no AI involvement.
 
 | File | Level (See Legend) | Owner | What the AI did | What the member changed by hand |
 |---|---|---|---|---|
-| `server/main.py` | TODO | Suñga | TODO | TODO |
-| `server/transport.py` | TODO | Suñga | TODO | TODO |
-| `server/heartbeat.py` | TODO | Suñga | TODO | TODO |
+| `server/main.py` | G | Suñga | TODO | TODO |
+| `server/transport.py` | G | Suñga | TODO | TODO |
+| `server/heartbeat.py` | A | Suñga | TODO | TODO |
 | `server/lobby.py` | TODO | Rebudiao | TODO | TODO |
 | `server/phase_engine.py` | TODO | Rebudiao | TODO | TODO |
 | `server/combat.py` | TODO | Barreo | TODO | TODO |
