@@ -32,6 +32,7 @@ class StateViewMixin:
             "graveyard": {self.pid(0): list(self.players[0]["graveyard"]),
                           self.pid(1): list(self.players[1]["graveyard"])},
             "hand": {self.pid(for_idx): list(me["hand"])},
+            "mulligans": me["mulligans"],
             "hand_counts": {self.pid(1 - for_idx): len(opp["hand"])},
             "library_counts": {self.pid(0): len(self.players[0]["library"]),
                                self.pid(1): len(self.players[1]["library"])},
