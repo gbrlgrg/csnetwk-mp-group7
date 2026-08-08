@@ -57,28 +57,29 @@ needed (standard library only).
 > (Linux/macOS: `python3 --version`).
 
 1. **Unzip the project** and open a terminal in the project folder (the one containing the `server/` package).
-2. **Start the server** (Terminal 1). It listens on port 4444 (RFC 5.1):
+> **Note:** You could add `--verbose` for steps 3-5 to enable verbose mode. 
+3. **Start the server** (Terminal 1). It listens on port 4444 (RFC 5.1):
    ```
-   python3 -m server.main --verbose
+   python -m server.main
    ```
    You should see `[server] listening on port 4444`. Use `--port <n>` if
    4444 is taken (then add `--port <n>` to the clients too).
-3. **Start the first client** (Terminal 2):
+4. **Start the first client** (Terminal 2):
    ```
-   python3 -m client.main --id player_1 --deck decks/burn.txt --verbose
+   python -m client.main --id player_1 --deck decks/burn.txt 
    ```
    If the server is on another machine, add `--host <server-ip>`.
-4. **Start the second client** (Terminal 3):
+5. **Start the second client** (Terminal 3):
    ```
-   python3 -m client.main --id player_2 --deck decks/control.txt --verbose
+   python -m client.main --id player_2 --deck decks/control.txt
    ```
    A third connection attempt will be refused by the server (RFC 5.1).
-5. **Join the game:** type `ready` in each client and press Enter. When both
+6. **Join the game:** type `ready` in each client and press Enter. When both
    are ready the server deals hands and the mulligan begins.
-6. **Mulligan:** type `keep` to keep your hand, or `mull` to redraw. After
+7. **Mulligan:** type `keep` to keep your hand, or `mull` to redraw. After
    N mulligans, keep with `keep <card_1> ... <card_N>` to put N cards on
    the bottom of your library (London mulligan).
-7. **Play:** when you see `>>> You have priority`, you may act:
+8. **Play:** when you see `>>> You have priority`, you may act:
    * `play mountain_003` — play a land (your main phase only, 1/turn)
    * `cast lightning_bolt_001 player_2` — cast a spell (mana is paid
      automatically from your untapped lands)
@@ -89,7 +90,7 @@ needed (standard library only).
    * `discard <card>` — discard to 7 at cleanup; `yes` / `no` — answer an
      optional trigger; `hand` / `state` — re-print; `concede` — give up;
      `help` — full list
-8. **Game over:** the winner and reason are announced; both clients stay
+9. **Game over:** the winner and reason are announced; both clients stay
    connected and can type `ready` to start a new game (RFC 6.6).
 
 ### Verbose mode (rubric prerequisite)
@@ -115,13 +116,13 @@ Requirement" toggle in the project specification.
 ### Tests
 
 ```
-python3 server/tests/test_card_catalog.py     # unit tests (catalog/decks)
-python3 server/tests/test_game_state.py       # unit tests (data model)
-python3 server/tests/test_priority_stack.py   # unit tests (tokens/stack)
-python3 server/tests/test_effects.py          # unit tests (effects/mana/SBAs)
-python3 server/tests/test_integration_game.py    # 10 protocol assertions
-python3 server/tests/test_integration_combat.py  #  3 combat assertions
-python3 server/tests/test_integration_edge.py    # 18 edge-case assertions
+python server/tests/test_card_catalog.py     # unit tests (catalog/decks)
+python server/tests/test_game_state.py       # unit tests (data model)
+python server/tests/test_priority_stack.py   # unit tests (tokens/stack)
+python server/tests/test_effects.py          # unit tests (effects/mana/SBAs)
+python server/tests/test_integration_game.py    # 10 protocol assertions
+python server/tests/test_integration_combat.py  #  3 combat assertions
+python server/tests/test_integration_edge.py    # 18 edge-case assertions
 ```
 
 All are run from the project root. `test_integration_edge.py` derives a deterministic RNG seed by replicating the server's
