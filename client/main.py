@@ -410,7 +410,7 @@ class Client:
         out = []
         if phase == "DECLARE_ATTACKERS":
             legal = [p["id"] for p in bf
-                     if p.get("creature") and not p.get("tapped")
+                     if "power" in p and not p.get("tapped")
                      and not p.get("summoning_sick")]
             if legal:
                 out.append(f"type 'attack {legal[0]}' to attack with "
@@ -424,9 +424,9 @@ class Client:
             return out
         if phase == "DECLARE_BLOCKERS":
             blockers = [p["id"] for p in bf
-                        if p.get("creature") and not p.get("tapped")]
+                        if "power" in p and not p.get("tapped")]
             atks = [p["id"] for p in opp_bf
-                    if p.get("creature") and p.get("tapped")]
+                    if "power" in p and p.get("tapped")]
             if not blockers:
                 out.append("no untapped creatures to block with — "
                            "type 'block'")
