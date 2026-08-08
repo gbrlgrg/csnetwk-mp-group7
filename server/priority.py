@@ -172,6 +172,7 @@ class PriorityMixin:
                 continue
             if t == "CAST_SPELL":
                 if self.try_cast(idx, pdu, main_phase):
+                    self.broadcast_state()
                     return idx        # caster retains priority (RFC 8.1)
                 self.resend_grant(idx, token)
                 continue

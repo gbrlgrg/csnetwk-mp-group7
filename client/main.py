@@ -161,6 +161,7 @@ class Client:
         self.ready_seq = 0
         self.pong_deadline = None
         self._rendered = False
+        self._last_sig = None
         self.running = True
 
     # ---------------- sending ----------------
@@ -190,13 +191,15 @@ class Client:
                 # MULLIGAN_CHOICE and DISCARD (RFC 5.4).
                 if self.state.get("phase") in ("MULLIGAN", "CLEANUP"):
                     self.request_token = pdu["seq_num"]
-            # Redraw only when the player is being asked something (lobby,
-            # mulligan, cleanup discard) or on the first update. Otherwise
-            # the PRIORITY_GRANT refresh keeps the view current without
-            # reprinting the whole board after every single event.
+            sig = self._state_sig()
+            # Redraw on the first update, in special phases, or whenever the
+            # visible state actually changed (mana/life/board/hand), so the
+            # display stays live after every cast, land, attack or resolution.
             if (self.state.get("phase") in ("LOBBY", "GAME_SETUP", "MULLIGAN",
                                             "CLEANUP")
-                    or not self._rendered):
+                    or not self._rendered
+                    or sig != self._last_sig):
+                self._last_sig = sig
                 self.render()
                 self._rendered = True
                 if self.state.get("phase") in ("LOBBY", "GAME_SETUP",
@@ -205,7 +208,7 @@ class Client:
         elif t == "PRIORITY_GRANT":
             with self.lock:
                 self.priority_token = pdu["seq_num"]
-            if self._rendered:
+            if self._rendered and self._state_sig() != self._last_sig:
                 self.render()
             print(f"\n{_c(_GREEN + _BOLD, '>>> You have priority')} "
                   f"(seq {pdu['seq_num']}, "
@@ -345,6 +348,30 @@ class Client:
                 if c:
                     counts[c] = counts.get(c, 0) + 1
         return counts
+
+    def _state_sig(self):
+        """Hashable fingerprint of everything render() displays, used to
+        redraw the board only when the visible state actually changed."""
+        s = self.state
+        bf = []
+        for pid, perms in (s.get("battlefield") or {}).items():
+            for p in perms:
+                if "power" in p:
+                    bf.append((pid, p["id"], p.get("tapped"),
+                               p.get("damage"), p.get("power"),
+                               p.get("toughness"), p.get("summoning_sick")))
+                else:
+                    bf.append((pid, p["id"], p.get("tapped")))
+        stack = tuple((i.get("stack_item_id"), i.get("source"),
+                       tuple(i.get("targets") or []))
+                      for i in s.get("stack") or [])
+        lt = tuple(sorted((s.get("life_totals") or {}).items()))
+        hc = tuple(sorted((s.get("hand_counts") or {}).items()))
+        lc = tuple(sorted((s.get("library_counts") or {}).items()))
+        hand = tuple(s.get("hand", {}).get(self.player_id, []))
+        return (s.get("turn"), s.get("phase"), s.get("active_player"),
+                lt, bf, hand, hc, lc, stack,
+                s.get("land_played_this_turn"))
 
     # ---------------- beginner suggestions ----------------
     def _card_kind(self, cid):
