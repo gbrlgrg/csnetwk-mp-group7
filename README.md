@@ -299,11 +299,3 @@ explain the rest of the codebase at the demo.
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO | TODO |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT | ![Gregorio Signature](signatures/Gregorio%20Signature%20and%20Date.jpg) |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO | TODO |
-
-### 7. Prompt / session log (optional but recommended)
-
-Keeping a short log makes the disclosure verifiable if questioned.
-
-| Date | Tool | Prompt summary | Output used? | Where it ended up |
-|---|---|---|---|---|
-| TODO | TODO | TODO e.g. "implement LIFO stack with priority windows per RFC 8.4" | TODO yes/edited/discarded | TODO `server/stack.py` |
