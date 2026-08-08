@@ -30,10 +30,25 @@ HOST = "127.0.0.1"
 
 
 class Bot:
-    def __init__(self, name):
+    def __init__(self, name, player_id):
         self.name = name
+        self.player_id = player_id
+        self.hand = []                # my hand, tracked from GAME_STATE_UPDATE
+        self.field = {}               # my battlefield by card id
         self.sock = socket.create_connection((HOST, PORT), timeout=20)
         self.sock.settimeout(20)
+
+    def _track(self, pdu):
+        """Mirror the lean-turn auto-pass decision: track my hand and
+        battlefield so the test can predict whether the server grants me."""
+        st = pdu.get("state") if pdu.get("type") == "GAME_STATE_UPDATE" else None
+        if not st:
+            return
+        if self.player_id in st.get("hand", {}):
+            self.hand = st["hand"][self.player_id]
+        bf = st.get("battlefield", {})
+        if self.player_id in bf:
+            self.field = {p["id"]: p for p in bf[self.player_id]}
 
     def send(self, pdu):
         payload = json.dumps(pdu).encode()
@@ -48,6 +63,7 @@ class Bot:
         while len(buf) < n:
             buf += self.sock.recv(n - len(buf))
         pdu = json.loads(buf.decode())
+        self._track(pdu)
         print(f"  [{self.name} <-] {pdu['type']} seq={pdu.get('seq_num')}")
         return pdu
 
@@ -81,7 +97,7 @@ def main():
 
 
 def run(srv):
-    p1, p2 = Bot("p1"), Bot("p2")
+    p1, p2 = Bot("p1", "player_1"), Bot("p2", "player_2")
 
     # --- extra connection is refused (RFC 5.1) ---
     time.sleep(0.2)
@@ -152,6 +168,29 @@ def run(srv):
     def bot_id(bot):
         return "player_1" if bot is p1 else "player_2"
 
+    def can_act_instantly(bot):
+        """Mirror server/priority.py auto-pass: the server grants a bot iff it
+        holds an instant its current untapped lands can pay."""
+        from server.card_catalog import card_def, load_catalog
+        cat = load_catalog()
+        avail = {}
+        for cid, perm in bot.field.items():
+            d = card_def(cat, cid)
+            if d and d.get("kind") == "land" and not perm.get("tapped"):
+                c = d.get("produces")
+                if c:
+                    avail[c] = avail.get(c, 0) + 1
+        for c in bot.hand:
+            d = card_def(cat, c)
+            if not d or d.get("kind") != "instant":
+                continue
+            cost = d.get("cost") or {}
+            if (sum(avail.values()) >= sum(cost.values())
+                    and all(avail.get(k, 0) >= n for k, n in cost.items()
+                            if k != "X")):
+                return True
+        return False
+
     def maybe_discard(bot):
         """Consume PDUs until the next UNTAP; if a CLEANUP state shows more
         than 7 cards in hand, answer the server's DISCARD request."""
@@ -169,16 +208,17 @@ def run(srv):
                               "card_ids": hand[:len(hand) - 7]})
                     print(f"  [{bot.name}] discarded down to 7")
 
-    # helper: both pass one full priority window
-    def both_pass():
+    # helper: AP passes its window; NAP only passes if the server would
+    # grant it (it holds a castable instant) — otherwise it was auto-passed.
+    def pass_window():
         g = ap.wait_priority()
         ap.send({"type": "PRIORITY_PASS", "seq_num": g["seq_num"]})
-        g = nap.wait_priority()
-        nap.send({"type": "PRIORITY_PASS", "seq_num": g["seq_num"]})
+        if can_act_instantly(nap):
+            gg = nap.wait_priority()
+            nap.send({"type": "PRIORITY_PASS", "seq_num": gg["seq_num"]})
 
-    # --- Turn 1: upkeep, draw (no card on turn 1), main ---
-    both_pass()                                   # UPKEEP
-    both_pass()                                   # DRAW (no draw turn 1)
+    # --- Turn 1: first grant is PRECOMBAT_MAIN (UPKEEP/DRAW have no
+    # priority windows in the lean turn) ---
     g = ap.wait_priority()                        # PRECOMBAT_MAIN
 
     # --- STALE_ACTION check: send a wrong seq_num on purpose ---
@@ -191,42 +231,36 @@ def run(srv):
     land = next(c for c in ap_hand if c.split("_")[0] in
                 ("mountain", "swamp", "island"))
     ap.send({"type": "PLAY_LAND", "seq_num": g["seq_num"], "card_id": land})
-    g = ap.wait_priority()
+    g = ap.wait_priority()                        # AP retains after the land
     ap.send({"type": "PRIORITY_PASS", "seq_num": g["seq_num"]})
-    gg = nap.wait_priority()
-    nap.send({"type": "PRIORITY_PASS", "seq_num": gg["seq_num"]})
+    if can_act_instantly(nap):
+        gg = nap.wait_priority()
+        nap.send({"type": "PRIORITY_PASS", "seq_num": gg["seq_num"]})
 
     # --- combat: declare no attackers via the PHASE_TRANSITION token ---
-    both_pass()                                   # BEGIN_COMBAT
     pt = ap.recv_until("PHASE_TRANSITION")
     while pt["to_phase"] != "DECLARE_ATTACKERS":
         pt = ap.recv_until("PHASE_TRANSITION")
     ap.send({"type": "DECLARE_ATTACKERS", "seq_num": pt["seq_num"],
              "attackers": []})
-    both_pass()                                   # END_OF_COMBAT
-    both_pass()                                   # POSTCOMBAT_MAIN
-    both_pass()                                   # END_STEP
+    # no attackers -> END_OF_COMBAT -> POSTCOMBAT_MAIN window
+    pass_window()                                 # POSTCOMBAT_MAIN
     maybe_discard(ap)                             # cleanup discard if needed
 
     # --- Turn 2: the other player takes a fast turn passing everything ---
     ap, nap = nap, ap
-    both_pass()                                   # UPKEEP
-    both_pass()                                   # DRAW
-    both_pass()                                   # PRECOMBAT_MAIN (no plays)
-    both_pass()                                   # BEGIN_COMBAT
+    pass_window()                                 # PRECOMBAT_MAIN (no plays)
     pt = ap.recv_until("PHASE_TRANSITION")
     while pt["to_phase"] != "DECLARE_ATTACKERS":
         pt = ap.recv_until("PHASE_TRANSITION")
     ap.send({"type": "DECLARE_ATTACKERS", "seq_num": pt["seq_num"],
              "attackers": []})
-    both_pass()                                   # END_OF_COMBAT
-    both_pass()                                   # POSTCOMBAT_MAIN
-    both_pass()                                   # END_STEP
+    pass_window()                                 # POSTCOMBAT_MAIN
     maybe_discard(ap)                             # cleanup discard if needed
 
     # --- Turn 3+: original AP concedes to prove CONCEDE + LOBBY restart ---
     ap, nap = nap, ap
-    g = ap.wait_priority()                        # UPKEEP of turn 3
+    g = ap.wait_priority()                        # PRECOMBAT_MAIN of turn 3
     ap.send({"type": "CONCEDE", "seq_num": g["seq_num"],
              "player_id": active})
     over1 = p1.recv_until("GAME_OVER")

@@ -2,7 +2,6 @@
 test_edge.py — edge-case validation for MTGNP v1.0. Three seeded games:
 
 GAME A (scripted 10-turn game, seat 0 first):
-  E1  PLAY_LAND during Upkeep        -> ERROR WRONG_PHASE
   E2  unpayable CAST_SPELL           -> ERROR INSUFFICIENT_MANA
   E3  after E2 the server re-issues PRIORITY_GRANT with the SAME seq_num
   E4  attacking with a summoning-sick creature -> ERROR ILLEGAL_ACTION
@@ -13,6 +12,9 @@ GAME A (scripted 10-turn game, seat 0 first):
       Youthful Knight (2/1 first strike) kills its Bears blocker before
       taking damage and survives
   E8  Gray Merchant ETB trigger accepted -> drain 2 applied to life totals
+
+  (E1 "land during Upkeep -> WRONG_PHASE" was re-homed as a unit test in
+  test_priority_stack.py once the lean turn removed non-main windows.)
 
 GAME B: both decks 8 cards -> the 4th draw hits an empty library
   E9  GAME_OVER reason DECK_EMPTY with the correct winner
@@ -222,8 +224,6 @@ def game_a():
     try:
         p1 = EdgeBot("player_1", DECK1,
                      script={
-                         (1, "UPKEEP"): [("raw", {"type": "PLAY_LAND",
-                                                  "card_id": "mountain_001"})],
                          (1, "PRECOMBAT_MAIN"): [("play", "mountain")],
                          (3, "PRECOMBAT_MAIN"): [("play", "plains"),
                                                  ("cast", "youthful_knight",
@@ -272,8 +272,6 @@ def game_a():
 
         ev = p1.events
         errs = [e for e in ev if e["type"] == "ERROR"]
-        ok(any(e["code"] == "WRONG_PHASE" for e in errs),
-           "E1 land during Upkeep rejected with WRONG_PHASE")
         ok(any(e["code"] == "INSUFFICIENT_MANA" for e in errs),
            "E2 unpayable cast rejected with INSUFFICIENT_MANA")
 

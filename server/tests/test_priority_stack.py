@@ -145,6 +145,19 @@ class TestStack(unittest.TestCase):
         codes = [p["code"] for p in s.clients[1].sent if p["type"] == "ERROR"]
         self.assertIn("WRONG_PHASE", codes)
 
+    def test_play_land_wrong_phase_rejected(self):
+        # Re-homed from integration E1 (lean turn: upkeep no longer grants
+        # priority, so the rejection must be unit-tested directly).
+        s = make_server()
+        s.active = 0
+        s.players[0]["hand"] = ["mountain_001"]
+        ok = s.try_play_land(0, {"type": "PLAY_LAND",
+                                 "card_id": "mountain_001"}, main_phase=False)
+        self.assertFalse(ok)
+        codes = [p["code"] for p in s.clients[0].sent if p["type"] == "ERROR"]
+        self.assertIn("WRONG_PHASE", codes)
+        self.assertEqual(s.players[0]["battlefield"], [])   # nothing played
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
