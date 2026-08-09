@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTGNP - Magic: The Gathering Network Protocol</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0e1a;
+            --panel-bg: rgba(26, 31, 53, 0.8);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --accent-gold: #c9a84c;
+            --mana-r: #e44d4d;
+            --mana-u: #4d8be4;
+            --mana-b: #9b59b6;
+            --mana-g: #4de44d;
+            --mana-w: #f5e6c8;
+            --mana-x: #999999;
+            --life-color: #2ecc71;
+            --damage-color: #e74c3c;
+            --card-land: #2E4C33;
+            --card-creature: #8C7B44;
+            --card-instant: #2C4869;
+            --card-sorcery: #4A3063;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #151c30 0%, #0a0e1a 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, .card-title, .phase-text {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Utility Classes */
+        .glass {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: var(--bg-color);
+        }
+
+        #game-screen {
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            grid-template-rows: 60px 1fr;
+            height: 100%;
+            width: 100%;
+            padding: 10px;
+            gap: 10px;
+            background: transparent;
+        }
+
+        /* Lobby Form */
+        .lobby-box {
+            padding: 40px;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .lobby-box h1 {
+            text-align: center;
+            color: var(--accent-gold);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        input, select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #111;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-gold);
+        }
+
+        button {
+            background: linear-gradient(to bottom, #d4b55c, #9c7b2a);
+            color: #111;
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(201, 168, 76, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: linear-gradient(to bottom, #444, #222);
+            color: white;
+            text-shadow: none;
+        }
+
+        /* Top Bar: Phases */
+        .top-bar {
+            grid-column: 1 / 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .phase {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .phase.active {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(201,168,76,0.5);
+        }
+
+        /* Main Game Area */
+        .play-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+            position: relative;
+        }
+
+        .player-zone, .opponent-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+        }
+        
+        .opponent-zone {
+            flex-direction: column-reverse;
+        }
+
+        .battlefield {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            min-height: 150px;
+        }
+        
+        .opponent-zone .battlefield {
+            flex-direction: column-reverse;
+        }
+
+        .creature-row, .land-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            min-height: 140px;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.5), transparent);
+        }
+
+        .avatar-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #333;
+            border: 2px solid var(--accent-gold);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+        }
+
+        .life-total {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--life-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+        }
+
+        .mana-pool {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mana {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.8em;
+            color: black;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        .mana.w { background: var(--mana-w); }
+        .mana.u { background: var(--mana-u); color: white; }
+        .mana.b { background: var(--mana-b); color: white; }
+        .mana.r { background: var(--mana-r); color: white; }
+        .mana.g { background: var(--mana-g); }
+        .mana.x { background: var(--mana-x); color: white; }
+
+        .deck-grave {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .deck-grave div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .deck-grave span { font-weight: bold; color: white; font-size: 1.2em; }
+
+        /* Hand */
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            height: 160px;
+            position: relative;
+        }
+
+        .opponent-hand {
+            display: flex;
+            justify-content: center;
+            gap: -20px;
+            height: 60px;
+        }
+        
+        .card-back {
+            width: 40px;
+            height: 56px;
+            background: linear-gradient(135deg, #4b2e2e, #1a1010);
+            border: 2px solid #5c4033;
+            border-radius: 4px;
+            margin-left: -20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+        }
+        .card-back:first-child { margin-left: 0; }
+
+        /* Card Styling */
+        .card {
+            width: 100px;
+            height: 140px;
+            border-radius: 6px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #222;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.1);
+            z-index: 50;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+        }
+        
+        .card.tapped {
+            transform: rotate(90deg);
+        }
+        .card.tapped:hover {
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .card.land { background: var(--card-land); border-color: #4a7552; }
+        .card.creature { background: var(--card-creature); border-color: #d1b864; }
+        .card.instant { background: var(--card-instant); border-color: #436e9e; }
+        .card.sorcery { background: var(--card-sorcery); border-color: #7950a1; }
+
+        .card-inner {
+            background: #111;
+            flex: 1;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            padding: 3px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2px;
+        }
+
+        .card-name {
+            font-size: 0.6em;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 70%;
+        }
+
+        .card-cost {
+            display: flex;
+            gap: 1px;
+            transform: scale(0.6);
+            transform-origin: top right;
+        }
+
+        .card-art {
+            flex: 1;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(0,0,0,0.5));
+            border-radius: 2px;
+            margin: 2px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            opacity: 0.3;
+        }
+
+        .card-type {
+            font-size: 0.5em;
+            color: #aaa;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+        }
+
+        .card-pt {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: #111;
+            border: 1px solid #555;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .sick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            color: rgba(255,255,255,0.7);
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+
+        .damage-token {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--damage-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            box-shadow: 0 0 5px black;
+        }
+
+        /* Stack */
+        .stack-zone {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            z-index: 40;
+            pointer-events: none;
+        }
+        
+        .stack-item {
+            margin-top: -100px;
+            transition: all 0.3s;
+            pointer-events: auto;
+        }
+        .stack-item:last-child {
+            margin-top: 0;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        /* Sidebar: Log & Actions */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .game-log::-webkit-scrollbar { width: 5px; }
+        .game-log::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+
+        .log-entry { margin-bottom: 3px; }
+        .log-sys { color: #aaa; font-style: italic; }
+        .log-p1 { color: #8cb4ff; }
+        .log-p2 { color: #ff8c8c; }
+        .log-alert { color: var(--accent-gold); font-weight: bold; }
+        .log-combat { color: #ff5555; }
+
+        .actions-panel {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-pass {
+            background: linear-gradient(to bottom, #4d8be4, #2c528a);
+            font-size: 1.2em;
+            padding: 15px;
+        }
+        .btn-attack { background: linear-gradient(to bottom, #e44d4d, #8a2c2c); }
+        .btn-block { background: linear-gradient(to bottom, #e4934d, #8a572c); }
+
+        /* Mulligan Screen */
+        #mulligan-screen {
+            background: rgba(10, 14, 26, 0.95);
+        }
+        .mulligan-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        .mulligan-hand {
+            display: flex;
+            gap: 15px;
+        }
+        .mulligan-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Game Over */
+        #game-over-screen {
+            background: rgba(0, 0, 0, 0.9);
+            flex-direction: column;
+            gap: 20px;
+        }
+        .winner-text {
+            font-size: 4em;
+            color: var(--accent-gold);
+            text-shadow: 0 0 20px rgba(201,168,76,0.8);
+        }
+        .reason-text {
+            font-size: 1.5em;
+            color: #aaa;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.9); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            100% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.9); }
+        }
+        
+        .selected {
+            box-shadow: 0 0 15px var(--accent-gold), 0 0 5px var(--accent-gold) inset !important;
+            transform: translateY(-10px);
+        }
+
+        .targetable {
+            box-shadow: 0 0 15px var(--mana-u) !important;
+            cursor: crosshair;
+        }
+        
+        .attacking {
+            transform: translateY(-20px) !important;
+            box-shadow: 0 0 15px var(--damage-color) !important;
+        }
+
+        /* Arrows */
+        .svg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 30;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Connection / Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+        <div class="glass lobby-box">
+            <h1>MTGNP</h1>
+            <div class="input-group">
+                <label>Host IP</label>
+                <input type="text" id="host-ip" value="127.0.0.1">
+            </div>
+            <div class="input-group">
+                <label>Port</label>
+                <input type="text" id="host-port" value="4444">
+            </div>
+            <div class="input-group">
+                <label>Player Name</label>
+                <input type="text" id="player-name" value="Player1">
+            </div>
+            <div class="input-group">
+                <label>Deck</label>
+                <select id="deck-select">
+                    <option value="red_aggro.txt">Red Aggro (Burn & Haste)</option>
+                    <option value="green_stompy.txt">Green Stompy (Big Creatures)</option>
+                    <option value="burn.txt">Burn (Direct Damage)</option>
+                    <option value="control.txt">Blue/Black Control</option>
+                </select>
+            </div>
+            <button onclick="startGame()">Connect & Ready</button>
+            <button class="secondary" onclick="startDemo()">Start Demo Mode</button>
+            <div id="lobby-status" style="text-align: center; color: #aaa; font-size: 0.9em; height: 1.2em;"></div>
+        </div>
+    </div>
+
+    <!-- Mulligan Screen -->
+    <div id="mulligan-screen" class="screen hidden">
+        <div class="mulligan-box">
+            <h1 style="color:white">Opening Hand</h1>
+            <div class="mulligan-hand" id="mulligan-cards">
+                <!-- Cards injected here -->
+            </div>
+            <p style="color:#aaa" id="mulligan-info">Hand size: 7 | Mulligans: 0</p>
+            <div class="mulligan-actions">
+                <button onclick="keepHand()">Keep Hand</button>
+                <button class="secondary" onclick="mulligan()">Mulligan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Screen -->
+    <div id="game-screen" class="hidden">
+        <div class="top-bar glass">
+            <div class="phase" id="phase-upkeep">UPKEEP</div>
+            <div class="phase" id="phase-draw">DRAW</div>
+            <div class="phase" id="phase-precombat">PRECOMBAT</div>
+            <div class="phase" id="phase-combat">COMBAT</div>
+            <div class="phase" id="phase-postcombat">POSTCOMBAT</div>
+            <div class="phase" id="phase-end">END</div>
+        </div>
+
+        <div class="play-area">
+            <svg class="svg-overlay" id="arrows-layer"></svg>
+            
+            <!-- Opponent Zone -->
+            <div class="opponent-zone">
+                <div class="stats-panel glass">
+                    <div class="avatar-area">
+                        <div class="avatar" id="opp-avatar">🤖</div>
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.2em;" id="opp-name">Opponent</div>
+                            <div style="font-size: 0.8em; color: #aaa;" id="opp-turn-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="mana-pool" id="opp-mana"></div>
+                    <div class="deck-grave">
+                        <div>Cards <span id="opp-hand-count">7</span></div>
+                        <div>Deck <span id="opp-deck-count">40</span></div>
+                        <div>Grave <span id="opp-grave-count">0</span></div>
+                    </div>
+                    <div class="life-total">❤️ <span id="opp-life">20</span></div>
+                </div>
+                
+                <div class="opponent-hand" id="opp-hand">
+                    <div class="card-back"></div><div class="card-back"></div><div class="card-back"></div>
+                    <div class="card-back"></div><div class="card-back"></div>
+                </div>
+
+                <div class="battlefield">
+                    <div class="land-row" id="opp-lands"></div>
+                    <div class="creature-row" id="opp-creatures"></div>
+                </div>
+            </div>
+
+            <!-- Stack Zone -->
+            <div class="stack-zone" id="stack-zone"></div>
+
+            <!-- Player Zone -->
+            <div class="player-zone">
+                <div class="battlefield">
+                    <div class="creature-row" id="player-creatures"></div>
+                    <div class="land-row" id="player-lands"></div>
+                </div>
+
+                <div class="hand" id="player-hand"></div>
+
+                <div class="stats-panel glass">
+                    <div class="life-total">❤️ <span id="player-life">20</span></div>
+                    <div class="deck-grave">
+                        <div>Grave <span id="player-grave-count">0</span></div>
+                        <div>Deck <span id="player-deck-count">33</span></div>
+                    </div>
+                    <div class="mana-pool" id="player-mana"></div>
+                    <div class="avatar-area">
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 1.2em;" id="player-name-display">Player</div>
+                            <div style="font-size: 0.8em; color: var(--accent-gold);" id="player-turn-indicator">Your Turn</div>
+                        </div>
+                        <div class="avatar" id="player-avatar">🧙</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="game-log glass" id="game-log">
+                <div class="log-entry log-sys">Welcome to MTGNP</div>
+            </div>
+            <div class="actions-panel glass">
+                <button class="btn-pass" id="btn-pass" onclick="actionPass()">Pass Priority</button>
+                <button class="btn-attack hidden" id="btn-attack" onclick="actionAttack()">Declare Attackers</button>
+                <button class="btn-block hidden" id="btn-block" onclick="actionBlock()">Declare Blockers</button>
+                <button class="secondary hidden" id="btn-cancel" onclick="cancelAction()">Cancel</button>
+                <button class="secondary" style="margin-top: 10px; font-size: 0.8em;" onclick="actionConcede()">Concede</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+        <div class="winner-text" id="winner-text">VICTORY</div>
+        <div class="reason-text" id="reason-text">Opponent's life reached 0</div>
+        <button onclick="location.reload()" style="margin-top: 20px;">Play Again</button>
+    </div>
+
+    <script>
+        // --- Card Database ---
+        const CARDS = {
+            "mountain": { "name": "Mountain", "kind": "land", "produces": "R" },
+            "island": { "name": "Island", "kind": "land", "produces": "U" },
+            "swamp": { "name": "Swamp", "kind": "land", "produces": "B" },
+            "forest": { "name": "Forest", "kind": "land", "produces": "G" },
+            "plains": { "name": "Plains", "kind": "land", "produces": "W" },
+            "goblin_guide": { "name": "Goblin Guide", "kind": "creature", "cost": { "R": 1 }, "power": 2, "toughness": 2, "haste": true },
+            "grizzly_bears": { "name": "Grizzly Bears", "kind": "creature", "cost": { "G": 1, "X": 1 }, "power": 2, "toughness": 2 },
+            "wall_of_stone": { "name": "Wall of Stone", "kind": "creature", "cost": { "R": 1, "X": 2 }, "power": 0, "toughness": 8 },
+            "reckless_wurm": { "name": "Reckless Wurm", "kind": "creature", "cost": { "R": 2, "X": 2 }, "power": 4, "toughness": 4 },
+            "youthful_knight": { "name": "Youthful Knight", "kind": "creature", "cost": { "W": 1, "X": 1 }, "power": 2, "toughness": 1, "first_strike": true },
+            "gray_merchant": { "name": "Gray Merchant of Asphodel", "kind": "creature", "cost": { "B": 2, "X": 3 }, "power": 2, "toughness": 4 },
+            "festering_imp": { "name": "Festering Imp", "kind": "creature", "cost": { "B": 1 }, "power": 1, "toughness": 1 },
+            "lightning_bolt": { "name": "Lightning Bolt", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 3, "needs_target": true },
+            "shock": { "name": "Shock", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 2, "needs_target": true },
+            "counterspell": { "name": "Counterspell", "kind": "instant", "cost": { "U": 2 }, "effect": "counter", "needs_target": true },
+            "giant_growth": { "name": "Giant Growth", "kind": "instant", "cost": { "G": 1 }, "effect": "pump", "power": 3, "toughness": 3, "needs_target": true },
+            "healing_salve": { "name": "Healing Salve", "kind": "instant", "cost": { "W": 1 }, "effect": "lifegain", "amount": 3, "needs_target": true },
+            "divination": { "name": "Divination", "kind": "sorcery", "cost": { "U": 1, "X": 2 }, "effect": "draw", "amount": 2 }
+        };
+
+        // --- Game State (Client Side) ---
+        let gameState = {
+            playerId: "Player1",
+            oppId: "Opponent",
+            activePlayer: "Player1",
+            phase: "PRECOMBAT_MAIN",
+            turn: 1,
+            player: {
+                life: 20, mana: {W:0, U:0, B:0, R:0, G:0, X:0}, deck: 40, grave: 0,
+                hand: [], lands: [], creatures: []
+            },
+            opp: {
+                life: 20, mana: {W:0, U:0, B:0, R:0, G:0, X:0}, deck: 40, grave: 0, handCount: 5,
+                lands: [], creatures: []
+            },
+            stack: []
+        };
+
+        let uiState = {
+            mode: 'normal', // normal, targeting, attacking, blocking
+            selectedCardId: null,
+            pendingAttackers: [],
+            pendingBlockers: {} // attackerId -> [blockerIds]
+        };
+        
+        let demoMode = false;
+        let cardIdCounter = 1;
+
+        // --- Utility Functions ---
+        function getCard(id) {
+            let parts = id.split('_');
+            let idx = parts.pop();
+            let base = parts.join('_');
+            return CARDS[base];
+        }
+        
+        function createUniqueId(baseId) {
+            return `${baseId}_${cardIdCounter++}`;
+        }
+
+        function log(msg, type='sys') {
+            const logEl = document.getElementById('game-log');
+            const div = document.createElement('div');
+            div.className = `log-entry log-${type}`;
+            div.innerText = msg;
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function getManaHTML(cost) {
+            if (!cost) return '';
+            let html = '';
+            for (let [color, amt] of Object.entries(cost)) {
+                for (let i=0; i<amt; i++) {
+                    html += `<div class="mana ${color.toLowerCase()}">${color}</div>`;
+                }
+            }
+            return html;
+        }
+
+        function getCardArt(cardBaseId) {
+            const icons = {
+                'land': '🏔️', 'creature': '👾', 'instant': '⚡', 'sorcery': '✨',
+                'mountain': '🌋', 'island': '🌊', 'forest': '🌲', 'swamp': '💀', 'plains': '☀️',
+                'lightning_bolt': '🌩️', 'shock': '💥', 'goblin_guide': '👺', 'grizzly_bears': '🐻'
+            };
+            return icons[cardBaseId] || icons[CARDS[cardBaseId]?.kind] || '🎴';
+        }
+
+        // --- Render Functions ---
+        function renderCardHTML(uniqueId, cardData, isOpponent = false, zone = 'hand') {
+            const baseId = uniqueId.split('_').slice(0, -1).join('_');
+            const c = CARDS[baseId] || cardData;
+            if (!c) return '';
+            
+            const costHtml = getManaHTML(c.cost);
+            const ptHtml = c.kind === 'creature' ? `<div class="card-pt">${c.power}/${c.toughness}</div>` : '';
+            
+            let classes = `card ${c.kind}`;
+            if (cardData.tapped) classes += ' tapped';
+            
+            let extraHtml = '';
+            if (cardData.sick) extraHtml += `<div class="sick">💤</div>`;
+            if (cardData.damage > 0) extraHtml += `<div class="damage-token">${cardData.damage}</div>`;
+
+            return `
+                <div class="${classes}" id="${uniqueId}" data-id="${uniqueId}" data-zone="${zone}" data-owner="${isOpponent ? 'opp' : 'player'}">
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <span class="card-name">${c.name}</span>
+                            <div class="card-cost">${costHtml}</div>
+                        </div>
+                        <div class="card-art">${getCardArt(baseId)}</div>
+                        <div class="card-type">${c.kind.toUpperCase()}</div>
+                        ${ptHtml}
+                        ${extraHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGameState() {
+            // Stats
+            document.getElementById('player-life').innerText = gameState.player.life;
+            document.getElementById('opp-life').innerText = gameState.opp.life;
+            document.getElementById('player-deck-count').innerText = gameState.player.deck;
+            document.getElementById('opp-deck-count').innerText = gameState.opp.deck;
+            document.getElementById('player-hand-count') ? document.getElementById('player-hand-count').innerText = gameState.player.hand.length : null;
+            document.getElementById('opp-hand-count').innerText = gameState.opp.handCount;
+            
+            // Turn indicator
+            if (gameState.activePlayer === gameState.playerId) {
+                document.getElementById('player-turn-indicator').innerText = `Turn ${gameState.turn} - Active`;
+                document.getElementById('opp-turn-indicator').innerText = '';
+            } else {
+                document.getElementById('player-turn-indicator').innerText = '';
+                document.getElementById('opp-turn-indicator').innerText = `Turn ${gameState.turn} - Active`;
+            }
+
+            // Mana
+            const rMana = (pool) => Object.entries(pool).filter(([c,v])=>v>0).map(([c,v]) => `<div class="mana ${c.toLowerCase()}">${v}</div>`).join('');
+            document.getElementById('player-mana').innerHTML = rMana(gameState.player.mana);
+            document.getElementById('opp-mana').innerHTML = rMana(gameState.opp.mana);
+
+            // Zones
+            document.getElementById('player-hand').innerHTML = gameState.player.hand.map(c => renderCardHTML(c.id, c, false, 'hand')).join('');
+            document.getElementById('player-lands').innerHTML = gameState.player.lands.map(c => renderCardHTML(c.id, c, false, 'battlefield')).join('');
+            document.getElementById('player-creatures').innerHTML = gameState.player.creatures.map(c => renderCardHTML(c.id, c, false, 'battlefield')).join('');
+            
+            document.getElementById('opp-lands').innerHTML = gameState.opp.lands.map(c => renderCardHTML(c.id, c, true, 'battlefield')).join('');
+            document.getElementById('opp-creatures').innerHTML = gameState.opp.creatures.map(c => renderCardHTML(c.id, c, true, 'battlefield')).join('');
+            
+            // Opp Hand (hidden)
+            document.getElementById('opp-hand').innerHTML = Array(gameState.opp.handCount).fill('<div class="card-back"></div>').join('');
+
+            // Stack
+            document.getElementById('stack-zone').innerHTML = gameState.stack.map(c => renderCardHTML(c.id, c, c.owner==='opp', 'stack')).join('');
+
+            // Phases
+            document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
+            let phaseId = 'phase-precombat';
+            if (gameState.phase.includes('UPKEEP')) phaseId = 'phase-upkeep';
+            if (gameState.phase.includes('DRAW')) phaseId = 'phase-draw';
+            if (gameState.phase.includes('COMBAT')) phaseId = 'phase-combat';
+            if (gameState.phase.includes('POSTCOMBAT')) phaseId = 'phase-postcombat';
+            if (gameState.phase.includes('END') || gameState.phase.includes('CLEANUP')) phaseId = 'phase-end';
+            document.getElementById(phaseId).classList.add('active');
+
+            // Action Buttons
+            const isMyTurn = gameState.activePlayer === gameState.playerId;
+            document.getElementById('btn-attack').classList.toggle('hidden', !(isMyTurn && gameState.phase === 'DECLARE_ATTACKERS'));
+            document.getElementById('btn-block').classList.toggle('hidden', !(!isMyTurn && gameState.phase === 'DECLARE_BLOCKERS'));
+            document.getElementById('btn-pass').classList.toggle('hidden', uiState.mode !== 'normal');
+            document.getElementById('btn-cancel').classList.toggle('hidden', uiState.mode === 'normal');
+
+            attachCardListeners();
+        }
+
+        // --- Interaction Logic ---
+        function attachCardListeners() {
+            document.querySelectorAll('.card').forEach(card => {
+                card.onclick = (e) => handleCardClick(card.dataset.id, card.dataset.owner, card.dataset.zone, e);
+            });
+        }
+
+        function handleCardClick(id, owner, zone, e) {
+            e.stopPropagation();
+            if (demoMode) handleDemoClick(id, owner, zone);
+        }
+
+        function clearSelection() {
+            uiState.mode = 'normal';
+            uiState.selectedCardId = null;
+            document.querySelectorAll('.selected, .targetable').forEach(el => {
+                el.classList.remove('selected', 'targetable');
+            });
+            renderGameState();
+        }
+
+        function cancelAction() {
+            clearSelection();
+            log("Action cancelled.", 'sys');
+        }
+
+        // --- Demo Mode Logic ---
+        function startDemo() {
+            demoMode = true;
+            document.getElementById('lobby-screen').classList.add('hidden');
+            
+            // Set up a fake game state
+            gameState.player.hand = [
+                {id: createUniqueId('mountain'), tapped: false},
+                {id: createUniqueId('lightning_bolt'), tapped: false},
+                {id: createUniqueId('goblin_guide'), tapped: false}
+            ];
+            gameState.player.lands = [
+                {id: createUniqueId('mountain'), tapped: true},
+                {id: createUniqueId('mountain'), tapped: false}
+            ];
+            gameState.player.creatures = [
+                {id: createUniqueId('reckless_wurm'), tapped: false, damage: 1, sick: false}
+            ];
+            gameState.player.mana = {R: 1, X: 0, W:0, U:0, B:0, G:0};
+
+            gameState.opp.lands = [
+                {id: createUniqueId('island'), tapped: false},
+                {id: createUniqueId('swamp'), tapped: false}
+            ];
+            gameState.opp.creatures = [
+                {id: createUniqueId('grizzly_bears'), tapped: false, damage: 0, sick: false}
+            ];
+            
+            gameState.phase = 'PRECOMBAT_MAIN';
+            
+            document.getElementById('game-screen').classList.remove('hidden');
+            renderGameState();
+            log("Demo mode started. Try clicking cards to play/cast them, or click Pass.", 'sys');
+        }
+
+        function handleDemoClick(id, owner, zone) {
+            const cardObj = findCardObj(id, owner, zone);
+            const baseId = id.split('_').slice(0, -1).join('_');
+            const cardData = CARDS[baseId];
+
+            if (uiState.mode === 'normal') {
+                if (owner === 'player' && zone === 'hand') {
+                    if (cardData.kind === 'land') {
+                        // Play land
+                        gameState.player.hand = gameState.player.hand.filter(c => c.id !== id);
+                        gameState.player.lands.push(cardObj);
+                        log(`You played ${cardData.name}.`, 'p1');
+                        renderGameState();
+                    } else if (cardData.needs_target) {
+                        uiState.mode = 'targeting';
+                        uiState.selectedCardId = id;
+                        document.getElementById(id).classList.add('selected');
+                        log(`Select target for ${cardData.name}...`, 'sys');
+                        document.getElementById('btn-pass').classList.add('hidden');
+                        document.getElementById('btn-cancel').classList.remove('hidden');
+                    } else {
+                        // Cast spell without target
+                        gameState.player.hand = gameState.player.hand.filter(c => c.id !== id);
+                        gameState.player.mana.R = 0; // fake cost reduction
+                        
+                        if (cardData.kind === 'creature') {
+                            cardObj.sick = true;
+                            gameState.player.creatures.push(cardObj);
+                            log(`You cast ${cardData.name}.`, 'p1');
+                        }
+                        renderGameState();
+                    }
+                } else if (owner === 'player' && zone === 'battlefield' && cardData.kind === 'land' && !cardObj.tapped) {
+                    // Tap land for mana
+                    cardObj.tapped = true;
+                    gameState.player.mana[cardData.produces]++;
+                    log(`Tapped ${cardData.name} for ${cardData.produces}.`, 'sys');
+                    renderGameState();
+                }
+            } else if (uiState.mode === 'targeting') {
+                // We selected a target
+                const sourceId = uiState.selectedCardId;
+                const sourceBase = sourceId.split('_').slice(0, -1).join('_');
+                const sourceData = CARDS[sourceBase];
+                
+                gameState.player.hand = gameState.player.hand.filter(c => c.id !== sourceId);
+                
+                // Animate to stack
+                const spell = {id: sourceId, owner: 'player'};
+                gameState.stack.push(spell);
+                log(`You cast ${sourceData.name} targeting ${CARDS[baseId].name}.`, 'p1');
+                
+                clearSelection();
+                
+                // Simulate resolution
+                setTimeout(() => {
+                    gameState.stack.pop();
+                    if (zone === 'battlefield' && cardData.kind === 'creature') {
+                        cardObj.damage = (cardObj.damage || 0) + (sourceData.amount || 3);
+                        if (cardObj.damage >= cardData.toughness) {
+                            log(`${CARDS[baseId].name} dies!`, 'sys');
+                            if (owner === 'opp') gameState.opp.creatures = gameState.opp.creatures.filter(c=>c.id!==id);
+                            else gameState.player.creatures = gameState.player.creatures.filter(c=>c.id!==id);
+                        } else {
+                            log(`${CARDS[baseId].name} takes ${sourceData.amount} damage.`, 'sys');
+                        }
+                    } else if (owner === 'opp' && zone !== 'battlefield') {
+                        gameState.opp.life -= (sourceData.amount || 3);
+                        log(`Opponent takes ${sourceData.amount} damage.`, 'sys');
+                        if (gameState.opp.life <= 0) showGameOver('Player1', 'Opponent life reached 0');
+                    }
+                    renderGameState();
+                }, 1500);
+            }
+        }
+
+        function findCardObj(id, owner, zone) {
+            let p = owner === 'opp' ? gameState.opp : gameState.player;
+            if (zone === 'hand') return p.hand.find(c=>c.id===id);
+            if (zone === 'battlefield') return p.creatures.find(c=>c.id===id) || p.lands.find(c=>c.id===id);
+            return null;
+        }
+
+        function actionPass() {
+            if (!demoMode) return;
+            const phases = ['PRECOMBAT_MAIN', 'BEGINNING_OF_COMBAT', 'DECLARE_ATTACKERS', 'DECLARE_BLOCKERS', 'COMBAT_DAMAGE', 'POSTCOMBAT_MAIN', 'END_STEP'];
+            let idx = phases.indexOf(gameState.phase);
+            if (idx < phases.length - 1) {
+                gameState.phase = phases[idx + 1];
+                log(`Phase changed to ${gameState.phase.replace(/_/g, ' ')}`, 'sys');
+            } else {
+                gameState.activePlayer = gameState.activePlayer === 'Player1' ? 'Opponent' : 'Player1';
+                gameState.phase = 'UPKEEP';
+                gameState.turn++;
+                log(`--- Turn ${gameState.turn}: ${gameState.activePlayer}'s Turn ---`, 'sys');
+                
+                // Untap all
+                let p = gameState.activePlayer === 'Player1' ? gameState.player : gameState.opp;
+                p.lands.forEach(c => c.tapped = false);
+                p.creatures.forEach(c => { c.tapped = false; c.sick = false; c.damage = 0; });
+                
+                setTimeout(() => {
+                    gameState.phase = 'PRECOMBAT_MAIN';
+                    if (gameState.activePlayer === 'Player1' && gameState.player.deck > 0) {
+                        gameState.player.hand.push({id: createUniqueId('mountain'), tapped: false});
+                        gameState.player.deck--;
+                        log("You drew a card.", 'sys');
+                    }
+                    renderGameState();
+                }, 1000);
+            }
+            renderGameState();
+        }
+
+        function actionAttack() {
+            log("Click your creatures to attack.", 'sys');
+        }
+        function actionBlock() {
+            log("Click your creatures then attacking creatures to block.", 'sys');
+        }
+
+        // --- Network / Connection (Dummy) ---
+        function startGame() {
+            document.getElementById('lobby-status').innerText = "Connecting to server...";
+            setTimeout(() => {
+                document.getElementById('lobby-status').innerText = "Connection failed (No server). Try Demo Mode!";
+            }, 1000);
+        }
+
+        function keepHand() {
+            document.getElementById('mulligan-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+        }
+        
+        function mulligan() {
+            log("Mulligan not implemented in dummy.", 'sys');
+        }
+        
+        function actionConcede() {
+            showGameOver('Opponent', 'Player conceded');
+        }
+        
+        function showGameOver(winner, reason) {
+            document.getElementById('game-screen').classList.add('hidden');
+            const go = document.getElementById('game-over-screen');
+            go.classList.remove('hidden');
+            go.style.display = 'flex';
+            document.getElementById('winner-text').innerText = winner === 'Player1' ? 'VICTORY' : 'DEFEAT';
+            document.getElementById('winner-text').style.color = winner === 'Player1' ? 'var(--accent-gold)' : 'var(--damage-color)';
+            document.getElementById('reason-text').innerText = reason;
+        }
+        
+        // Initial setup
+        document.getElementById('player-name').value = "Hero";
+
+    </script>
+</body>
+</html>
