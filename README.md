@@ -191,8 +191,8 @@ seeded shuffle locally, so its scripted 10-turn game is fully reproducible.
 
 ## Work Distribution Matrix
 
-Member 1 = John Lloyd Suñga · Member 2 = TODO Daniel Rebudiao ·
-Member 3 = Gaibril Gregorio · Member 4 = TODO Carlo Barreo
+Member 1 = John Lloyd Suñga · Member 2 = Daniel Rebudiao ·
+Member 3 = Gaibril Gregorio · Member 4 = Carlo Barreo
 
 | Task / Feature | Member 1 | Member 2 | Member 3 | Member 4 |
 |---|---|---|---|---|
