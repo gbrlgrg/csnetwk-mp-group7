@@ -238,9 +238,9 @@ explanation · **H** = hand-written, no AI involvement.
 
 | File | Level (See Legend) | Owner | What the AI did | What the member changed by hand |
 |---|---|---|---|---|
-| `server/main.py` | G | Suñga | TODO | TODO |
-| `server/transport.py` | G | Suñga | TODO | TODO |
-| `server/heartbeat.py` | A | Suñga | TODO | TODO |
+| `server/main.py` | G | Suñga | Generating of pseudocode for needed functions, Help in unfamiliar processes, Argument parser help, Debugging | Writing of the functions |
+| `server/transport.py` | G | Suñga | Generating logical flow for each needed functions, Help in PDU formatting when verbose is on, Explanation of unfamiliar error classes, Help in nuances of threading, Triple-checking of legal C->S PDU types | Writing of some functions, Improvements of bugged lines, Double-checking of legal C->S PDU types |
+| `server/heartbeat.py` | A | Suñga | Debugging and clarifying understanding | Answering the ping |
 | `server/lobby.py` | TODO | Rebudiao | TODO | TODO |
 | `server/phase_engine.py` | TODO | Rebudiao | TODO | TODO |
 | `server/combat.py` | TODO | Barreo | TODO | TODO |
@@ -252,24 +252,16 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/effects.py` | G | Gregorio | Debugged Edge Cases like generic mana coverage checks and the countered-spell graveyard handling | I did all of the card effect logic |
 | `client/main.py` | TODO | Barreo | TODO | TODO |
 | `server/tests/*.py` | TODO | TODO | TODO | TODO |
-| `shared/cards.json`, `decks/*.txt` | TODO | TODO | TODO | TODO |
+| `shared/cards.json`, `decks/*.txt` | A | All Members | Double-checked correctness of necessary values | We wrote everything |
 | `README.md` | G | all | General formatting of the whole README file | Fixed the TODO markings and grammar. |
 
 ### 4. What was **not** AI-generated
 
-TODO — list the work that is entirely the group's. Suggested items:
-
-* TODO e.g. interpretation of RFC 0001 and the deviations in *Known
+* Interpretation of RFC 0001 and the deviations in *Known
   deviations / interpretations* above
-* TODO e.g. the module split and mixin composition in `server/main.py`
-* TODO e.g. the seq_num echo discipline decided after testing stale actions
-* TODO e.g. deck construction in `decks/` and card balance in `cards.json`
-* TODO e.g. all bugs found and fixed during interoperability testing
+* Deck construction in `decks/` and card balance in `cards.json`
 
 ### 5. Verification performed
-
-State how AI output was checked before it was accepted — this is what
-separates disclosed assistance from dishonesty.
 
 | Check | Done by | Result |
 |---|---|---|
@@ -278,16 +270,13 @@ separates disclosed assistance from dishonesty.
 | Manual 2-client game to `GAME_OVER`, both win conditions | TODO | TODO |
 | Verbose PDU logs checked against RFC 0001 §5 framing | TODO | TODO |
 | Error paths exercised (`INVALID_JSON`, `STALE_ACTION`, `ILLEGAL_DECK`, `INSUFFICIENT_MANA`) | TODO | TODO |
-| Line-by-line walkthrough of AI-drafted code by its owner | TODO | TODO |
+| Line-by-line walkthrough of AI-drafted code by its owner | All members | All pass |
 
 ### 6. Member attestation
 
-Each member signs for the modules they own **and** confirms they can
-explain the rest of the codebase at the demo.
-
 | Member | Modules I can explain line-by-line | AI tools I personally used | Signature / date |
 |---|---|---|---|
-| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | TODO | TODO |
+| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot | TODO |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO | TODO |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT | ![Gregorio Signature](signatures/Gregorio%20Signature%20and%20Date.jpg) |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO | TODO |
