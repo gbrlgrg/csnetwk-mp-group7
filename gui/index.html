@@ -23,6 +23,10 @@
             --card-creature: #8C7B44;
             --card-instant: #2C4869;
             --card-sorcery: #4A3063;
+            --card-w: 136px;
+            --card-h: 190px;
+            --cback-w: 44px;
+            --cback-h: 62px;
         }
 
         * {
@@ -76,14 +80,45 @@
         #game-screen {
             z-index: 10;
             display: grid;
-            grid-template-columns: 1fr 300px;
-            grid-template-rows: 60px 1fr;
-            height: 100%;
-            width: 100%;
-            padding: 10px;
-            gap: 10px;
+            grid-template-columns: minmax(0, 1fr) 280px;
+            grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+            height: 100vh;
+            width: 100vw;
+            padding: 8px;
+            gap: 8px;
             background: transparent;
+            overflow: hidden;
         }
+
+        .top-bar {
+            grid-column: 1;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 6px;
+        }
+
+        /* Scrollable center: holds both battlefields (content may scroll, pinned strips don't) */
+        .center-scroll {
+            grid-column: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        .center-scroll::-webkit-scrollbar { width: 8px; }
+        .center-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
+        .center-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .center-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
 
         /* Lobby Form */
         .lobby-box {
@@ -163,15 +198,7 @@
             text-shadow: none;
         }
 
-        /* Top Bar: Phases */
-        .top-bar {
-            grid-column: 1 / 3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-
+        /* Top Bar: Phases (.top-bar sizing lives with the #game-screen layout) */
         .phase {
             padding: 5px 10px;
             font-size: 0.8em;
@@ -188,48 +215,44 @@
         }
 
         /* Main Game Area */
-        .play-area {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            height: 100%;
-            position: relative;
-        }
-
-        .player-zone, .opponent-zone {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            position: relative;
-        }
-        
-        .opponent-zone {
-            flex-direction: column-reverse;
-        }
-
         .battlefield {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 10px;
+            gap: 8px;
+            padding: 8px;
             border-radius: 8px;
-            background: rgba(0,0,0,0.2);
-            min-height: 150px;
+            background: rgba(0,0,0,0.25);
+            position: relative;
+            flex-shrink: 0;
+            min-height: 180px;
         }
-        
-        .opponent-zone .battlefield {
-            flex-direction: column-reverse;
+
+        .battlefield::after {
+            content: 'BATTLEFIELD';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.07);
+            font-family: 'Cinzel', serif;
+            font-size: 2.2em;
+            letter-spacing: 0.3em;
+            pointer-events: none;
         }
 
         .creature-row, .land-row {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            min-height: 185px;
+            align-items: flex-start;
+            gap: 10px;
             flex-wrap: wrap;
-            align-content: center;
+            align-content: flex-start;
+            position: relative;
+            z-index: 1;
+            padding: 2px;
+            min-height: 0;
         }
 
         /* Stats Panel */
@@ -237,60 +260,65 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 20px;
+            gap: 12px;
+            padding: 6px 12px;
             background: linear-gradient(90deg, transparent, rgba(0,0,0,0.5), transparent);
+            flex-wrap: nowrap;
+            height: 52px;
+            overflow: hidden;
+            grid-column: 1;
         }
 
         .avatar-area {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
 
         .avatar {
-            width: 50px;
-            height: 50px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #333;
             border: 2px solid var(--accent-gold);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5em;
+            font-size: 1.1em;
         }
 
         .life-total {
-            font-size: 2em;
+            font-size: 1.6em;
             font-weight: bold;
             color: var(--life-color);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
         }
 
         .mana-pool {
             display: flex;
-            gap: 8px;
+            gap: 5px;
             align-items: center;
         }
 
         .mana-label {
-            font-size: 0.8em;
+            font-size: 0.7em;
             color: #aaa;
-            margin-right: 4px;
+            margin-right: 2px;
             font-weight: 600;
         }
 
         .mana {
-            width: 24px;
-            height: 24px;
+            width: clamp(12px, 1vmin, 20px);
+            height: clamp(12px, 1vmin, 20px);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            font-size: 0.8em;
+            font-size: clamp(8px, 0.7vmin, 12px);
             color: black;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
@@ -303,8 +331,8 @@
 
         .deck-grave {
             display: flex;
-            gap: 15px;
-            font-size: 0.9em;
+            gap: 12px;
+            font-size: 0.8em;
             color: #aaa;
         }
 
@@ -313,52 +341,81 @@
             flex-direction: column;
             align-items: center;
         }
-        .deck-grave span { font-weight: bold; color: white; font-size: 1.2em; }
+        .deck-grave span { font-weight: bold; color: white; font-size: 1.15em; }
+
+        .board-stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8em;
+            color: #aaa;
+            align-items: center;
+        }
+        .board-stats span { display: flex; flex-direction: column; align-items: center; }
+        .board-stats b { color: white; font-size: 1.15em; }
 
         /* Hand */
         .hand {
+            grid-column: 1;
             display: flex;
             justify-content: center;
-            gap: 10px;
-            padding: 10px;
-            height: 200px;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            height: calc(var(--card-h) + 14px);
             position: relative;
-            flex-wrap: wrap;
-            align-content: center;
+            flex-wrap: nowrap;
+            background: rgba(0,0,0,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            container-type: inline-size;
+        }
+
+        .hand .card {
+            width: max(40px, min(var(--card-w), calc((100cqw - 48px) / 7)));
+            height: auto;
+            aspect-ratio: 130 / 182;
+            flex-shrink: 1;
         }
 
         .opponent-hand {
+            grid-column: 1;
             display: flex;
             justify-content: center;
-            gap: -20px;
-            height: 60px;
+            align-items: center;
+            height: calc(var(--cback-h) + 12px);
+            flex-wrap: nowrap;
+            padding: 6px 4px;
+            overflow: hidden;
         }
         
         .card-back {
-            width: 50px;
-            height: 70px;
+            width: var(--cback-w);
+            height: var(--cback-h);
             background: linear-gradient(135deg, #4b2e2e, #1a1010);
             border: 2px solid #5c4033;
             border-radius: 5px;
-            margin-left: -20px;
+            margin-left: -18px;
             box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
         .card-back:first-child { margin-left: 0; }
 
         /* Card Styling */
         .card {
-            width: 130px;
-            height: 182px;
-            border-radius: 8px;
-            padding: 5px;
+            width: var(--card-w);
+            height: var(--card-h);
+            border-radius: 6px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
             position: relative;
+            z-index: 1;
             background: #222;
             box-shadow: 0 4px 8px rgba(0,0,0,0.6);
             transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
             cursor: pointer;
             border: 2px solid #333;
+            flex-shrink: 0;
         }
 
         .card:hover {
@@ -385,7 +442,8 @@
             border-radius: 3px;
             display: flex;
             flex-direction: column;
-            padding: 3px;
+            padding: 2px;
+            min-height: 0;
         }
 
         .card-header {
@@ -393,22 +451,26 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 2px;
+            gap: 2px;
+            min-height: 0;
         }
 
         .card-name {
-            font-size: 0.7em;
+            font-size: clamp(7px, 0.9vw, 11px);
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 70%;
+            width: 68%;
+            line-height: 1.1;
         }
 
         .card-cost {
             display: flex;
             gap: 1px;
-            transform: scale(0.6);
+            transform: scale(0.7);
             transform-origin: top right;
+            flex-shrink: 0;
         }
 
         .card-art {
@@ -419,16 +481,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2em;
+            font-size: 1.6em;
             opacity: 0.3;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .card-type {
-            font-size: 0.6em;
+            font-size: clamp(6px, 0.7vw, 9px);
             color: #aaa;
             border-bottom: 1px solid #333;
             padding-bottom: 1px;
             margin-bottom: 2px;
+            line-height: 1.1;
+            flex-shrink: 0;
         }
 
         .card-pt {
@@ -437,10 +503,11 @@
             right: 4px;
             background: #111;
             border: 1px solid #555;
-            padding: 3px 6px;
+            padding: 2px 5px;
             border-radius: 4px;
-            font-size: 0.8em;
+            font-size: clamp(8px, 0.8vw, 12px);
             font-weight: bold;
+            line-height: 1.1;
         }
 
         .sick {
@@ -477,7 +544,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
+            width: 260px;
             min-height: 100px;
             display: flex;
             flex-direction: column-reverse;
@@ -487,7 +554,7 @@
         }
         
         .stack-item {
-            margin-top: -100px;
+            margin-top: -150px;
             transition: all 0.3s;
             pointer-events: auto;
         }
@@ -498,19 +565,23 @@
 
         /* Sidebar: Log & Actions */
         .sidebar {
+            grid-column: 2;
+            grid-row: 1 / -1;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            min-height: 0;
         }
 
         .game-log {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 8px;
             font-size: 0.85em;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
+            min-height: 0;
         }
         
         .game-log::-webkit-scrollbar { width: 5px; }
@@ -524,16 +595,16 @@
         .log-combat { color: #ff5555; }
 
         .actions-panel {
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-pass {
             background: linear-gradient(to bottom, #4d8be4, #2c528a);
-            font-size: 1.2em;
-            padding: 15px;
+            font-size: 1.1em;
+            padding: 12px;
         }
         .btn-attack { background: linear-gradient(to bottom, #e44d4d, #8a2c2c); }
         .btn-block { background: linear-gradient(to bottom, #e4934d, #8a572c); }
@@ -734,69 +805,68 @@
             <div class="phase" id="phase-end">END</div>
         </div>
 
-        <div class="play-area">
-            <svg class="svg-overlay" id="arrows-layer"></svg>
-            
-            <!-- Opponent Zone -->
-            <div class="opponent-zone">
-                <div class="stats-panel glass">
-                    <div class="avatar-area">
-                        <div class="avatar" id="opp-avatar">🤖</div>
-                        <div>
-                            <div style="font-weight: bold; font-size: 1.2em;" id="opp-name">Opponent</div>
-                            <div style="font-size: 0.8em; color: #aaa;" id="opp-turn-indicator"></div>
-                        </div>
-                    </div>
-                    <div class="life-total">❤️ <span id="opp-life">20</span></div>
-                    <div class="mana-pool" id="opp-mana"><span class="mana-label">Mana</span></div>
-                    <div class="deck-grave">
-                        <div>Hand <span id="opp-hand-count">7</span></div>
-                        <div>Deck <span id="opp-deck-count">40</span></div>
-                        <div style="position:relative; cursor:help;">Grave <span id="opp-grave-count">0</span>
-                            <div class="grave-tooltip" id="opp-grave-tooltip">Empty</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="opponent-hand" id="opp-hand">
-                </div>
-
-                <div class="battlefield">
-                    <div class="land-row" id="opp-lands"></div>
-                    <div class="creature-row" id="opp-creatures"></div>
+        <div class="stats-panel glass" id="opp-stats">
+            <div class="avatar-area">
+                <div class="avatar" id="opp-avatar">🤖</div>
+                <div>
+                    <div style="font-weight: bold; font-size: 1em;" id="opp-name">Opponent</div>
+                    <div style="font-size: 0.72em; color: #aaa;" id="opp-turn-indicator"></div>
                 </div>
             </div>
+            <div class="mana-pool" id="opp-mana"><span class="mana-label">Mana</span></div>
+            <div class="board-stats">
+                <span>Creatures <b id="opp-creature-count">0</b></span>
+                <span>Lands <b id="opp-land-count">0</b></span>
+            </div>
+            <div class="deck-grave">
+                <div>Hand <span id="opp-hand-count">7</span></div>
+                <div>Deck <span id="opp-deck-count">40</span></div>
+                <div style="position:relative; cursor:help;">Grave <span id="opp-grave-count">0</span>
+                    <div class="grave-tooltip" id="opp-grave-tooltip">Empty</div>
+                </div>
+            </div>
+            <div class="life-total">❤️ <span id="opp-life">20</span></div>
+        </div>
 
-            <!-- Stack Zone -->
+        <div class="opponent-hand" id="opp-hand"></div>
+
+        <div class="center-scroll">
+            <svg class="svg-overlay" id="arrows-layer"></svg>
             <div class="stack-zone" id="stack-zone"></div>
 
-            <!-- Player Zone -->
-            <div class="player-zone">
-                <div class="battlefield">
-                    <div class="creature-row" id="player-creatures"></div>
-                    <div class="land-row" id="player-lands"></div>
-                </div>
+            <div class="battlefield">
+                <div class="creature-row" id="opp-creatures"></div>
+                <div class="land-row" id="opp-lands"></div>
+            </div>
 
-                <div class="hand" id="player-hand"></div>
+            <div class="battlefield">
+                <div class="creature-row" id="player-creatures"></div>
+                <div class="land-row" id="player-lands"></div>
+            </div>
+        </div>
 
-                <div class="stats-panel glass">
-                    <div class="avatar-area">
-                        <div class="avatar" id="player-avatar">🧙</div>
-                        <div style="text-align: left;">
-                            <div style="font-weight: bold; font-size: 1.2em;" id="player-name-display">Player</div>
-                            <div style="font-size: 0.8em; color: var(--accent-gold);" id="player-turn-indicator"></div>
-                        </div>
-                    </div>
-                    <div class="life-total">❤️ <span id="player-life">20</span></div>
-                    <div class="mana-pool" id="player-mana"><span class="mana-label">Mana</span></div>
-                    <div class="deck-grave">
-                        <div>Hand <span id="player-hand-count">7</span></div>
-                        <div>Deck <span id="player-deck-count">33</span></div>
-                        <div style="position:relative; cursor:help;">Grave <span id="player-grave-count">0</span>
-                            <div class="grave-tooltip" id="player-grave-tooltip">Empty</div>
-                        </div>
-                    </div>
+        <div class="hand" id="player-hand"></div>
+
+        <div class="stats-panel glass" id="player-stats">
+            <div class="life-total">❤️ <span id="player-life">20</span></div>
+            <div class="mana-pool" id="player-mana"><span class="mana-label">Mana</span></div>
+            <div class="board-stats">
+                <span>Creatures <b id="player-creature-count">0</b></span>
+                <span>Lands <b id="player-land-count">0</b></span>
+            </div>
+            <div class="deck-grave">
+                <div>Hand <span id="player-hand-count">7</span></div>
+                <div>Deck <span id="player-deck-count">33</span></div>
+                <div style="position:relative; cursor:help;">Grave <span id="player-grave-count">0</span>
+                    <div class="grave-tooltip" id="player-grave-tooltip">Empty</div>
                 </div>
+            </div>
+            <div class="avatar-area">
+                <div>
+                    <div style="text-align: right; font-weight: bold; font-size: 1em;" id="player-name-display">Player</div>
+                    <div style="text-align: right; font-size: 0.72em; color: var(--accent-gold);" id="player-turn-indicator"></div>
+                </div>
+                <div class="avatar" id="player-avatar">🧙</div>
             </div>
         </div>
 
@@ -1222,6 +1292,11 @@
             const oppLands = oppPerms.filter(p => !('power' in p));
             const oppCreatures = oppPerms.filter(p => 'power' in p);
 
+            document.getElementById('player-creature-count').innerText = myCreatures.length;
+            document.getElementById('opp-creature-count').innerText = oppCreatures.length;
+            document.getElementById('player-land-count').innerText = myLands.length;
+            document.getElementById('opp-land-count').innerText = oppLands.length;
+
             document.getElementById('player-lands').innerHTML =
                 myLands.map(p => renderBattlefieldCard(p, false)).join('');
             document.getElementById('player-creatures').innerHTML =
@@ -1292,6 +1367,8 @@
             if (!d) return '';
             const base = baseName(cardInstanceId);
             const costHtml = getManaHTML(d.cost);
+            const ptHtml = d.power !== undefined
+                ? `<div class="card-pt">${d.power}/${d.toughness}</div>` : '';
 
             let classes = `card ${d.kind}`;
             if (uiMode === 'discarding' && discardSelection.includes(cardInstanceId)) {
@@ -1309,6 +1386,7 @@
                         <div class="card-art">${getCardArt(base)}</div>
                         <div class="card-type">${d.kind.toUpperCase()}</div>
                     </div>
+                    ${ptHtml}
                 </div>
             `;
         }
