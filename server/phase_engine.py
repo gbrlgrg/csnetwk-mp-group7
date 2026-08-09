@@ -20,16 +20,16 @@ class PhaseEngineMixin:
                 perm["tapped"] = False
             ap["land_played"] = False
             self.broadcast_state()
-            # ---- Upkeep (7.3) ----
+            # ---- Upkeep (7.3): no triggers exist in MTGNP 1.0, so no
+            # priority window here (lean turn) ----
             self.phase_transition("UNTAP", "UPKEEP")
-            self.priority_window()
-            # ---- Draw (7.4): first player skips draw on turn 1 ----
+            # ---- Draw (7.4): first player skips draw on turn 1; drawing is
+            # automatic with no draw triggers, so no window ----
             self.phase_transition("UPKEEP", "DRAW")
             if not first:
                 self.draw_cards(self.active, 1)
                 self.broadcast_state()
             first = False
-            self.priority_window()
             # ---- Precombat Main (7.5) ----
             self.phase_transition("DRAW", "PRECOMBAT_MAIN")
             self.priority_window(main_phase=True)
@@ -38,9 +38,9 @@ class PhaseEngineMixin:
             # ---- Postcombat Main ----
             self.phase_transition(last, "POSTCOMBAT_MAIN")
             self.priority_window(main_phase=True)
-            # ---- End Step (7.7) ----
+            # ---- End Step (7.7): nothing cares about the end step in
+            # MTGNP 1.0 (pump clears in Cleanup), so no window ----
             self.phase_transition("POSTCOMBAT_MAIN", "END_STEP")
-            self.priority_window()
             # ---- Cleanup (7.8) ----
             self.phase_transition("END_STEP", "CLEANUP")
             self.run_cleanup()

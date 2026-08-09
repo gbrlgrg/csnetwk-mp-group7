@@ -7,6 +7,7 @@ consecutive-pass priority window (RFC 5.4, 8.1-8.2, 11). (Gregorio)
 import queue
 import time
 
+from server.card_catalog import card_def
 from server.game_state import ClientGone, GameOver
 from server.transport import KNOWN_CLIENT_TYPES
 
@@ -91,12 +92,47 @@ class PriorityMixin:
                                 "seq_num": token,
                                 "time_limit_ms": self.time_limit_ms})
 
+    def _can_act_instantly(self, idx):
+        """True if idx holds an instant whose cost their current untapped
+        lands could pay. Used to auto-pass players who have no legal instant-
+        speed action, so a lean turn never prompts someone with nothing to do."""
+        avail = {}
+        for perm in self.players[idx]["battlefield"]:
+            d = card_def(self.catalog, perm["id"])
+            if d["kind"] == "land" and not perm["tapped"]:
+                avail[d["produces"]] = avail.get(d["produces"], 0) + 1
+        for c in self.players[idx]["hand"]:
+            d = card_def(self.catalog, c)
+            if not d or d["kind"] != "instant":
+                continue
+            cost = d.get("cost") or {}
+            if sum(avail.values()) < sum(cost.values()):
+                continue
+            if all(avail.get(k, 0) >= n for k, n in cost.items()
+                   if k != "X"):
+                return True
+        return False
+
     def priority_window(self, main_phase=False):
         """One full priority window (RFC 8.1 / 8.2). Returns when both players
-        pass consecutively with an empty stack (step ends)."""
+        pass consecutively with an empty stack (step ends). A holder is auto-
+        passed (no PRIORITY_GRANT) whenever they have no castable instant,
+        unless they are the active player in their own main phase."""
         holder = self.active
         passes = 0
         while True:
+            if not (main_phase and holder == self.active) \
+                    and not self._can_act_instantly(holder):
+                passes += 1
+                if passes == 2:
+                    if self.stack:
+                        self.resolve_top()
+                        holder, passes = self.active, 0
+                    else:
+                        return                 # step advances
+                else:
+                    holder = 1 - holder
+                continue
             token = self.grant_priority(holder)
             acted = self.await_action(holder, token, main_phase)
             if acted == "PASS":
@@ -136,6 +172,7 @@ class PriorityMixin:
                 continue
             if t == "CAST_SPELL":
                 if self.try_cast(idx, pdu, main_phase):
+                    self.broadcast_state()
                     return idx        # caster retains priority (RFC 8.1)
                 self.resend_grant(idx, token)
                 continue
