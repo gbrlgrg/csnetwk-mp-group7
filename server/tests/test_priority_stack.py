@@ -145,6 +145,45 @@ class TestStack(unittest.TestCase):
         codes = [p["code"] for p in s.clients[1].sent if p["type"] == "ERROR"]
         self.assertIn("WRONG_PHASE", codes)
 
+    def test_play_land_wrong_phase_rejected(self):
+        # Re-homed from integration E1 (lean turn: upkeep no longer grants
+        # priority, so the rejection must be unit-tested directly).
+        s = make_server()
+        s.active = 0
+        s.players[0]["hand"] = ["mountain_001"]
+        ok = s.try_play_land(0, {"type": "PLAY_LAND",
+                                 "card_id": "mountain_001"}, main_phase=False)
+        self.assertFalse(ok)
+        codes = [p["code"] for p in s.clients[0].sent if p["type"] == "ERROR"]
+        self.assertIn("WRONG_PHASE", codes)
+        self.assertEqual(s.players[0]["battlefield"], [])   # nothing played
+
+    def test_cast_broadcasts_state_immediately(self):
+        # A successful cast must refresh both clients' state right away, so
+        # the mana line reflects the tapped lands before the spell resolves.
+        s = make_server()
+        s.active = 0
+        self.field(s, 0, "mountain_001", "mountain_002")
+        s.players[0]["hand"] = ["lightning_bolt_001"]
+        token = s.grant_priority(0)
+        s.events.put(("pdu", 0, {"type": "CAST_SPELL",
+                                 "card_id": "lightning_bolt_001",
+                                 "targets": ["player_2"],
+                                 "mana_payment": {"R": 1},
+                                 "seq_num": token}))
+        ret = s.await_action(0, token, main_phase=True)
+        self.assertEqual(ret, 0)                     # caster retains priority
+        updates = [p["state"] for p in s.clients[0].sent
+                   if p["type"] == "GAME_STATE_UPDATE"]
+        self.assertTrue(updates)                     # state refreshed on cast
+        bf = updates[-1]["battlefield"]["player_1"]
+        lands = [p for p in bf if p["id"] == "mountain_001"]
+        self.assertTrue(lands and lands[0]["tapped"])  # paying land tapped
+        self.assertNotIn("lightning_bolt_001",
+                         updates[-1]["hand"]["player_1"])
+        self.assertEqual([i["source"] for i in updates[-1]["stack"]],
+                         ["lightning_bolt_001"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

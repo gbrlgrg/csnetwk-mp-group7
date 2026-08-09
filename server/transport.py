@@ -45,7 +45,7 @@ def log_pdu(direction: str, who: str, pdu: dict) -> None:
     stamp = time.strftime("%H:%M:%S")
     with _log_lock:
         print(f"[{stamp}] {direction:4s} {who:>9s} | "
-              f"{json.dumps(pdu, separators=(', ', ': '))}")
+              f"{json.dumps(pdu, separators=(',', ':'))}")
         sys.stdout.flush()
 
 

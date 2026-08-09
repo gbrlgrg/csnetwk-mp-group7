@@ -191,8 +191,8 @@ seeded shuffle locally, so its scripted 10-turn game is fully reproducible.
 
 ## Work Distribution Matrix
 
-Member 1 = John Lloyd Suñga · Member 2 = TODO Daniel Rebudiao ·
-Member 3 = Gaibril Gregorio · Member 4 = TODO Carlo Barreo
+Member 1 = John Lloyd Suñga · Member 2 = Daniel Rebudiao ·
+Member 3 = Gaibril Gregorio · Member 4 = Carlo Barreo
 
 | Task / Feature | Member 1 | Member 2 | Member 3 | Member 4 |
 |---|---|---|---|---|
@@ -210,23 +210,15 @@ Member 3 = Gaibril Gregorio · Member 4 = TODO Carlo Barreo
 
 ## AI Usage Disclosure
 
-> **Fill this in truthfully before submission.** Every `TODO` below must be
-> replaced with what actually happened. Undisclosed AI use, or inability to
-> explain any part of the code at the demo, is treated as academic
-> dishonesty by the rubric. Delete rows that do not apply; do not delete
-> rows to hide usage.
-
 ### 1. Summary statement
 
-TODO — one paragraph, in your own words. Template:
-
-> AI assistance (TODO: tool names) was used during the development of this
-> machine problem, primarily for TODO (e.g. *generating an initial
-> implementation of the server package and client, drafting the test
-> scripts, and explaining RFC 0001 semantics*). All AI output was reviewed,
-> tested, and modified by the group. TODO (e.g. *the protocol design
-> decisions, the work split, the deck lists, and all debugging of the
-> phase/priority interaction were done by hand*). Every member has read
+> AI assistance (Claude, ChatGPT, GitHub Copilot) was used during the development of this
+> machine problem, primarily for extracting all requirements for the project,
+> generating a task delegation plan for four developers that follow the Work
+> Distribution Matrix, generating an initial
+> implementation of the server package and client, drafting test scripts, and
+> explaining other nuances in the specifications. All AI output was reviewed,
+> tested, and modified by the group. Every member has read
 > and can explain the modules attributed to them in the Work Distribution
 > Matrix above, and the group jointly reviewed all remaining modules.
 
@@ -234,7 +226,7 @@ TODO — one paragraph, in your own words. Template:
 
 | AI tool | Version / model | Used by | Access (free / paid / school) | What it was used for |
 |---|---|---|---|---|
-| Claude | Opus 5, Fable 5 | Gregorio, Barreo, Rebudiao | Free, Paid | Proper directory of the file architecture, Explanation of each task and how to implement it |
+| Claude | Opus 5, Fable 5 | All members| Free, Paid | Extracting an overview of the project requirements, Generating an organized task delegation plan, Proper directory of the file architecture, Explanation of each task and how to implement it |
 | ChatGPT | GPT-5 | All members | Free | Explaining LIFO stack semantics, debugging framing bug |
 | GitHub Copilot | Multi-model | All members | Free | Inline assisted autocompletion and guidance while writing files |
 
@@ -246,9 +238,9 @@ explanation · **H** = hand-written, no AI involvement.
 
 | File | Level (See Legend) | Owner | What the AI did | What the member changed by hand |
 |---|---|---|---|---|
-| `server/main.py` | TODO | Suñga | TODO | TODO |
-| `server/transport.py` | TODO | Suñga | TODO | TODO |
-| `server/heartbeat.py` | TODO | Suñga | TODO | TODO |
+| `server/main.py` | G | Suñga | Generating of pseudocode for needed functions, Help in unfamiliar processes, Argument parser help, Debugging | Writing of the functions |
+| `server/transport.py` | G | Suñga | Generating logical flow for each needed functions, Help in PDU formatting when verbose is on, Explanation of unfamiliar error classes, Help in nuances of threading, Triple-checking of legal C->S PDU types | Writing of some functions, Improvements of bugged lines, Double-checking of legal C->S PDU types |
+| `server/heartbeat.py` | A | Suñga | Debugging and clarifying understanding | Answering the ping |
 | `server/lobby.py` | TODO | Rebudiao | TODO | TODO |
 | `server/phase_engine.py` | TODO | Rebudiao | TODO | TODO |
 | `server/combat.py` | TODO | Barreo | TODO | TODO |
@@ -260,24 +252,16 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/effects.py` | G | Gregorio | Debugged Edge Cases like generic mana coverage checks and the countered-spell graveyard handling | I did all of the card effect logic |
 | `client/main.py` | TODO | Barreo | TODO | TODO |
 | `server/tests/*.py` | TODO | TODO | TODO | TODO |
-| `shared/cards.json`, `decks/*.txt` | TODO | TODO | TODO | TODO |
+| `shared/cards.json`, `decks/*.txt` | A | All Members | Double-checked correctness of necessary values | We wrote everything |
 | `README.md` | G | all | General formatting of the whole README file | Fixed the TODO markings and grammar. |
 
 ### 4. What was **not** AI-generated
 
-TODO — list the work that is entirely the group's. Suggested items:
-
-* TODO e.g. interpretation of RFC 0001 and the deviations in *Known
+* Interpretation of RFC 0001 and the deviations in *Known
   deviations / interpretations* above
-* TODO e.g. the module split and mixin composition in `server/main.py`
-* TODO e.g. the seq_num echo discipline decided after testing stale actions
-* TODO e.g. deck construction in `decks/` and card balance in `cards.json`
-* TODO e.g. all bugs found and fixed during interoperability testing
+* Deck construction in `decks/` and card balance in `cards.json`
 
 ### 5. Verification performed
-
-State how AI output was checked before it was accepted — this is what
-separates disclosed assistance from dishonesty.
 
 | Check | Done by | Result |
 |---|---|---|
@@ -286,24 +270,13 @@ separates disclosed assistance from dishonesty.
 | Manual 2-client game to `GAME_OVER`, both win conditions | TODO | TODO |
 | Verbose PDU logs checked against RFC 0001 §5 framing | TODO | TODO |
 | Error paths exercised (`INVALID_JSON`, `STALE_ACTION`, `ILLEGAL_DECK`, `INSUFFICIENT_MANA`) | TODO | TODO |
-| Line-by-line walkthrough of AI-drafted code by its owner | TODO | TODO |
+| Line-by-line walkthrough of AI-drafted code by its owner | All members | All pass |
 
 ### 6. Member attestation
 
-Each member signs for the modules they own **and** confirms they can
-explain the rest of the codebase at the demo.
-
 | Member | Modules I can explain line-by-line | AI tools I personally used | Signature / date |
 |---|---|---|---|
-| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | TODO | TODO |
+| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot | TODO |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO | TODO |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT | ![Gregorio Signature](signatures/Gregorio%20Signature%20and%20Date.jpg) |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO | TODO |
-
-### 7. Prompt / session log (optional but recommended)
-
-Keeping a short log makes the disclosure verifiable if questioned.
-
-| Date | Tool | Prompt summary | Output used? | Where it ended up |
-|---|---|---|---|---|
-| TODO | TODO | TODO e.g. "implement LIFO stack with priority windows per RFC 8.4" | TODO yes/edited/discarded | TODO `server/stack.py` |

@@ -12,7 +12,6 @@ class CombatMixin:
         phase we ended in ('END_OF_COMBAT') for the next PHASE_TRANSITION."""
         ap_i, nap_i = self.active, 1 - self.active
         self.phase_transition(self.phase, "BEGIN_COMBAT")
-        self.priority_window()
 
         # ---- Declare Attackers (9.3): token = PHASE_TRANSITION seq ----
         token = self.phase_transition("BEGIN_COMBAT", "DECLARE_ATTACKERS")
@@ -26,7 +25,6 @@ class CombatMixin:
         if not attackers:
             # RFC 9.3: no attackers -> skip straight to End of Combat.
             self.phase_transition("DECLARE_ATTACKERS", "END_OF_COMBAT")
-            self.priority_window()
             self.clear_combat()
             return "END_OF_COMBAT"
         for a in attackers:              # attacking taps the creature (9.3)
@@ -92,7 +90,6 @@ class CombatMixin:
                                    first_strike_step=False)
         # ---- End of Combat (9.8) ----
         self.phase_transition("COMBAT_DAMAGE", "END_OF_COMBAT")
-        self.priority_window()
         self.clear_combat()
         return "END_OF_COMBAT"
 
