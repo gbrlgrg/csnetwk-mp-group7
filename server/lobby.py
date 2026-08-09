@@ -63,10 +63,11 @@ class LobbyMixin:
             self.clients[idx].sock.close()
         except OSError:
             pass
-        sock, addr = self.listener.accept()
-        self.clients[idx] = ClientConn(sock, addr, idx, self.events)
+        with self._seats_lock:
+            self.clients[idx] = None
+        self.await_seat(idx)
         self.players[idx]["id"], self.players[idx]["deck"] = None, None
-        print(f"[server] seat {idx} reconnected from {addr}")
+        print(f"[server] seat {idx} reconnected from {self.clients[idx].addr}")
 
     def run_setup(self):
         self.phase = "GAME_SETUP"

@@ -52,9 +52,16 @@ class Server(TransportMixin, GameStateMixin, StateViewMixin, LobbyMixin,
         self.seq = 0                   # server PDU counter (RFC 5.4)
         self.stk_counter = 0
         self.trg_counter = 0
+        # Only one thread may ever call self.listener.accept() (see
+        # _accept_loop below); reconnect waiters block on these instead of
+        # racing each other for the next incoming connection.
+        self._seats_lock = threading.Lock()
+        self._seat_waiters = {}        # seat idx -> threading.Event
 
     # ------------------------------------------------------------------
     # Connection acceptance (RFC 5.1): exactly two seats, refuse extras.
+    # A single background thread owns accept() for the process lifetime,
+    # so a reconnecting client can never race the "refuse extras" logic.
     # ------------------------------------------------------------------
     def accept_players(self):
         srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,22 +70,36 @@ class Server(TransportMixin, GameStateMixin, StateViewMixin, LobbyMixin,
         srv.listen(5)
         print(f"[server] listening on port {self.port}")
         self.listener = srv
-        while None in self.clients:
-            sock, addr = srv.accept()
-            seat = self.clients.index(None)
-            self.clients[seat] = ClientConn(sock, addr, seat, self.events)
-            print(f"[server] seat {seat} connected from {addr}")
-        # Refuse any further connections in the background (RFC 5.1).
-        threading.Thread(target=self._refuse_loop, daemon=True).start()
+        threading.Thread(target=self._accept_loop, daemon=True).start()
+        self.await_seat(0)
+        self.await_seat(1)
 
-    def _refuse_loop(self):
+    def _accept_loop(self):
         while True:
             try:
                 sock, addr = self.listener.accept()
-                print(f"[server] refusing extra connection from {addr}")
-                sock.close()
             except OSError:
                 return
+            with self._seats_lock:
+                seat = self.clients.index(None) if None in self.clients else None
+                if seat is None:
+                    print(f"[server] refusing extra connection from {addr}")
+                    sock.close()
+                    continue
+                self.clients[seat] = ClientConn(sock, addr, seat, self.events)
+                print(f"[server] seat {seat} connected from {addr}")
+                waiter = self._seat_waiters.pop(seat, None)
+            if waiter:
+                waiter.set()
+
+    def await_seat(self, seat):
+        """Block until `seat` is filled (by _accept_loop) after being
+        cleared to None. Caller must clear self.clients[seat] first."""
+        with self._seats_lock:
+            if self.clients[seat] is not None:
+                return
+            event = self._seat_waiters.setdefault(seat, threading.Event())
+        event.wait()
 
     # ------------------------------------------------------------------
     # Session lifecycle (RFC Section 6): LOBBY -> ... -> GAME_OVER -> LOBBY
@@ -125,9 +146,10 @@ class Server(TransportMixin, GameStateMixin, StateViewMixin, LobbyMixin,
                 except OSError:
                     pass
                 print(f"[server] waiting for a new client on seat {i} ...")
-                sock, addr = self.listener.accept()
-                self.clients[i] = ClientConn(sock, addr, i, self.events)
-                print(f"[server] seat {i} reconnected from {addr}")
+                with self._seats_lock:
+                    self.clients[i] = None
+                self.await_seat(i)
+                print(f"[server] seat {i} reconnected from {self.clients[i].addr}")
 
 
 def main():
