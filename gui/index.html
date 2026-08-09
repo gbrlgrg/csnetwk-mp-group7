@@ -150,6 +150,13 @@
             transform: translateY(0);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         button.secondary {
             background: linear-gradient(to bottom, #444, #222);
             color: white;
@@ -220,7 +227,9 @@
             display: flex;
             justify-content: center;
             gap: 15px;
-            min-height: 140px;
+            min-height: 185px;
+            flex-wrap: wrap;
+            align-content: center;
         }
 
         /* Stats Panel */
@@ -263,6 +272,14 @@
         .mana-pool {
             display: flex;
             gap: 8px;
+            align-items: center;
+        }
+
+        .mana-label {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-right: 4px;
+            font-weight: 600;
         }
 
         .mana {
@@ -304,8 +321,10 @@
             justify-content: center;
             gap: 10px;
             padding: 10px;
-            height: 160px;
+            height: 200px;
             position: relative;
+            flex-wrap: wrap;
+            align-content: center;
         }
 
         .opponent-hand {
@@ -316,11 +335,11 @@
         }
         
         .card-back {
-            width: 40px;
-            height: 56px;
+            width: 50px;
+            height: 70px;
             background: linear-gradient(135deg, #4b2e2e, #1a1010);
             border: 2px solid #5c4033;
-            border-radius: 4px;
+            border-radius: 5px;
             margin-left: -20px;
             box-shadow: -2px 0 5px rgba(0,0,0,0.5);
         }
@@ -328,10 +347,10 @@
 
         /* Card Styling */
         .card {
-            width: 100px;
-            height: 140px;
-            border-radius: 6px;
-            padding: 4px;
+            width: 130px;
+            height: 182px;
+            border-radius: 8px;
+            padding: 5px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -377,7 +396,7 @@
         }
 
         .card-name {
-            font-size: 0.6em;
+            font-size: 0.7em;
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
@@ -405,7 +424,7 @@
         }
 
         .card-type {
-            font-size: 0.5em;
+            font-size: 0.6em;
             color: #aaa;
             border-bottom: 1px solid #333;
             padding-bottom: 1px;
@@ -414,13 +433,13 @@
 
         .card-pt {
             position: absolute;
-            bottom: 2px;
-            right: 2px;
+            bottom: 4px;
+            right: 4px;
             background: #111;
             border: 1px solid #555;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.7em;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
             font-weight: bold;
         }
 
@@ -576,6 +595,11 @@
             box-shadow: 0 0 15px var(--damage-color) !important;
         }
 
+        .blocking {
+            transform: translateY(-15px) !important;
+            box-shadow: 0 0 15px var(--mana-u) !important;
+        }
+
         /* Arrows */
         .svg-overlay {
             position: absolute;
@@ -583,21 +607,87 @@
             pointer-events: none;
             z-index: 30;
         }
+
+        /* Connection status indicator */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .connection-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        .connection-status.connected { background: rgba(46,204,113,0.2); color: #2ecc71; }
+        .connection-status.connected .dot { background: #2ecc71; }
+        .connection-status.disconnected { background: rgba(231,76,60,0.2); color: #e74c3c; }
+        .connection-status.disconnected .dot { background: #e74c3c; }
+        .connection-status.connecting { background: rgba(241,196,15,0.2); color: #f1c40f; }
+        .connection-status.connecting .dot { background: #f1c40f; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Priority indicator */
+        .priority-glow {
+            animation: priorityPulse 1.5s infinite;
+        }
+        @keyframes priorityPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(201,168,76,0.3); }
+            50% { box-shadow: 0 0 20px rgba(201,168,76,0.8); }
+        }
+
+        /* Graveyard tooltip */
+        .grave-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.95);
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 8px;
+            max-width: 200px;
+            font-size: 0.75em;
+            z-index: 60;
+            display: none;
+        }
+        .deck-grave div:hover .grave-tooltip {
+            display: block;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Connection Status -->
+    <div class="connection-status disconnected" id="conn-status">
+        <div class="dot"></div>
+        <span>Disconnected</span>
+    </div>
 
     <!-- Connection / Lobby Screen -->
     <div id="lobby-screen" class="screen">
         <div class="glass lobby-box">
             <h1>MTGNP</h1>
             <div class="input-group">
-                <label>Host IP</label>
+                <label>WebSocket Host</label>
                 <input type="text" id="host-ip" value="127.0.0.1">
             </div>
             <div class="input-group">
-                <label>Port</label>
-                <input type="text" id="host-port" value="4444">
+                <label>WebSocket Port</label>
+                <input type="text" id="host-port" value="8765">
             </div>
             <div class="input-group">
                 <label>Player Name</label>
@@ -606,15 +696,14 @@
             <div class="input-group">
                 <label>Deck</label>
                 <select id="deck-select">
-                    <option value="red_aggro.txt">Red Aggro (Burn & Haste)</option>
-                    <option value="green_stompy.txt">Green Stompy (Big Creatures)</option>
-                    <option value="burn.txt">Burn (Direct Damage)</option>
-                    <option value="control.txt">Blue/Black Control</option>
+                    <option value="red_aggro">Red Aggro (Burn & Haste)</option>
+                    <option value="green_stompy">Green Stompy (Big Creatures)</option>
+                    <option value="burn">Burn (Direct Damage)</option>
+                    <option value="control">Blue/Black Control</option>
                 </select>
             </div>
-            <button onclick="startGame()">Connect & Ready</button>
-            <button class="secondary" onclick="startDemo()">Start Demo Mode</button>
-            <div id="lobby-status" style="text-align: center; color: #aaa; font-size: 0.9em; height: 1.2em;"></div>
+            <button id="btn-connect" onclick="connectAndReady()">Connect & Ready</button>
+            <div id="lobby-status" style="text-align: center; color: #aaa; font-size: 0.9em; min-height: 1.2em;"></div>
         </div>
     </div>
 
@@ -626,9 +715,10 @@
                 <!-- Cards injected here -->
             </div>
             <p style="color:#aaa" id="mulligan-info">Hand size: 7 | Mulligans: 0</p>
+            <p style="color:#ff8c8c; font-size:0.85em;" id="mulligan-bottom-info" class="hidden">Select cards to put on bottom of library (click to toggle)</p>
             <div class="mulligan-actions">
-                <button onclick="keepHand()">Keep Hand</button>
-                <button class="secondary" onclick="mulligan()">Mulligan</button>
+                <button id="btn-keep" onclick="keepHand()">Keep Hand</button>
+                <button class="secondary" id="btn-mull" onclick="mulligan()">Mulligan</button>
             </div>
         </div>
     </div>
@@ -657,18 +747,18 @@
                             <div style="font-size: 0.8em; color: #aaa;" id="opp-turn-indicator"></div>
                         </div>
                     </div>
-                    <div class="mana-pool" id="opp-mana"></div>
-                    <div class="deck-grave">
-                        <div>Cards <span id="opp-hand-count">7</span></div>
-                        <div>Deck <span id="opp-deck-count">40</span></div>
-                        <div>Grave <span id="opp-grave-count">0</span></div>
-                    </div>
                     <div class="life-total">❤️ <span id="opp-life">20</span></div>
+                    <div class="mana-pool" id="opp-mana"><span class="mana-label">Mana</span></div>
+                    <div class="deck-grave">
+                        <div>Hand <span id="opp-hand-count">7</span></div>
+                        <div>Deck <span id="opp-deck-count">40</span></div>
+                        <div style="position:relative; cursor:help;">Grave <span id="opp-grave-count">0</span>
+                            <div class="grave-tooltip" id="opp-grave-tooltip">Empty</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="opponent-hand" id="opp-hand">
-                    <div class="card-back"></div><div class="card-back"></div><div class="card-back"></div>
-                    <div class="card-back"></div><div class="card-back"></div>
                 </div>
 
                 <div class="battlefield">
@@ -690,18 +780,21 @@
                 <div class="hand" id="player-hand"></div>
 
                 <div class="stats-panel glass">
-                    <div class="life-total">❤️ <span id="player-life">20</span></div>
-                    <div class="deck-grave">
-                        <div>Grave <span id="player-grave-count">0</span></div>
-                        <div>Deck <span id="player-deck-count">33</span></div>
-                    </div>
-                    <div class="mana-pool" id="player-mana"></div>
                     <div class="avatar-area">
-                        <div style="text-align: right;">
-                            <div style="font-weight: bold; font-size: 1.2em;" id="player-name-display">Player</div>
-                            <div style="font-size: 0.8em; color: var(--accent-gold);" id="player-turn-indicator">Your Turn</div>
-                        </div>
                         <div class="avatar" id="player-avatar">🧙</div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: bold; font-size: 1.2em;" id="player-name-display">Player</div>
+                            <div style="font-size: 0.8em; color: var(--accent-gold);" id="player-turn-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="life-total">❤️ <span id="player-life">20</span></div>
+                    <div class="mana-pool" id="player-mana"><span class="mana-label">Mana</span></div>
+                    <div class="deck-grave">
+                        <div>Hand <span id="player-hand-count">7</span></div>
+                        <div>Deck <span id="player-deck-count">33</span></div>
+                        <div style="position:relative; cursor:help;">Grave <span id="player-grave-count">0</span>
+                            <div class="grave-tooltip" id="player-grave-tooltip">Empty</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -713,9 +806,11 @@
             </div>
             <div class="actions-panel glass">
                 <button class="btn-pass" id="btn-pass" onclick="actionPass()">Pass Priority</button>
-                <button class="btn-attack hidden" id="btn-attack" onclick="actionAttack()">Declare Attackers</button>
-                <button class="btn-block hidden" id="btn-block" onclick="actionBlock()">Declare Blockers</button>
+                <button class="btn-attack hidden" id="btn-attack" onclick="confirmAttackers()">Confirm Attackers</button>
+                <button class="btn-block hidden" id="btn-block" onclick="confirmBlockers()">Confirm Blockers</button>
                 <button class="secondary hidden" id="btn-cancel" onclick="cancelAction()">Cancel</button>
+                <button class="secondary hidden" id="btn-target-player" onclick="targetOpponent()">Target Opponent</button>
+                <button class="secondary hidden" id="btn-target-self" onclick="targetSelf()">Target Self</button>
                 <button class="secondary" style="margin-top: 10px; font-size: 0.8em;" onclick="actionConcede()">Concede</button>
             </div>
         </div>
@@ -729,69 +824,117 @@
     </div>
 
     <script>
-        // --- Card Database ---
+        // =====================================================================
+        // CARD DATABASE (mirrors shared/cards.json)
+        // =====================================================================
         const CARDS = {
-            "mountain": { "name": "Mountain", "kind": "land", "produces": "R" },
-            "island": { "name": "Island", "kind": "land", "produces": "U" },
-            "swamp": { "name": "Swamp", "kind": "land", "produces": "B" },
-            "forest": { "name": "Forest", "kind": "land", "produces": "G" },
-            "plains": { "name": "Plains", "kind": "land", "produces": "W" },
-            "goblin_guide": { "name": "Goblin Guide", "kind": "creature", "cost": { "R": 1 }, "power": 2, "toughness": 2, "haste": true },
-            "grizzly_bears": { "name": "Grizzly Bears", "kind": "creature", "cost": { "G": 1, "X": 1 }, "power": 2, "toughness": 2 },
-            "wall_of_stone": { "name": "Wall of Stone", "kind": "creature", "cost": { "R": 1, "X": 2 }, "power": 0, "toughness": 8 },
-            "reckless_wurm": { "name": "Reckless Wurm", "kind": "creature", "cost": { "R": 2, "X": 2 }, "power": 4, "toughness": 4 },
+            "mountain":        { "name": "Mountain",  "kind": "land", "produces": "R" },
+            "island":          { "name": "Island",    "kind": "land", "produces": "U" },
+            "swamp":           { "name": "Swamp",     "kind": "land", "produces": "B" },
+            "forest":          { "name": "Forest",    "kind": "land", "produces": "G" },
+            "plains":          { "name": "Plains",    "kind": "land", "produces": "W" },
+            "goblin_guide":    { "name": "Goblin Guide",  "kind": "creature", "cost": { "R": 1 }, "power": 2, "toughness": 2, "haste": true },
+            "grizzly_bears":   { "name": "Grizzly Bears", "kind": "creature", "cost": { "G": 1, "X": 1 }, "power": 2, "toughness": 2 },
+            "wall_of_stone":   { "name": "Wall of Stone", "kind": "creature", "cost": { "R": 1, "X": 2 }, "power": 0, "toughness": 8 },
+            "reckless_wurm":   { "name": "Reckless Wurm", "kind": "creature", "cost": { "R": 2, "X": 2 }, "power": 4, "toughness": 4 },
             "youthful_knight": { "name": "Youthful Knight", "kind": "creature", "cost": { "W": 1, "X": 1 }, "power": 2, "toughness": 1, "first_strike": true },
-            "gray_merchant": { "name": "Gray Merchant of Asphodel", "kind": "creature", "cost": { "B": 2, "X": 3 }, "power": 2, "toughness": 4 },
-            "festering_imp": { "name": "Festering Imp", "kind": "creature", "cost": { "B": 1 }, "power": 1, "toughness": 1 },
-            "lightning_bolt": { "name": "Lightning Bolt", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 3, "needs_target": true },
-            "shock": { "name": "Shock", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 2, "needs_target": true },
-            "counterspell": { "name": "Counterspell", "kind": "instant", "cost": { "U": 2 }, "effect": "counter", "needs_target": true },
-            "giant_growth": { "name": "Giant Growth", "kind": "instant", "cost": { "G": 1 }, "effect": "pump", "power": 3, "toughness": 3, "needs_target": true },
-            "healing_salve": { "name": "Healing Salve", "kind": "instant", "cost": { "W": 1 }, "effect": "lifegain", "amount": 3, "needs_target": true },
-            "divination": { "name": "Divination", "kind": "sorcery", "cost": { "U": 1, "X": 2 }, "effect": "draw", "amount": 2 }
+            "gray_merchant":   { "name": "Gray Merchant of Asphodel", "kind": "creature", "cost": { "B": 2, "X": 3 }, "power": 2, "toughness": 4 },
+            "festering_imp":   { "name": "Festering Imp", "kind": "creature", "cost": { "B": 1 }, "power": 1, "toughness": 1 },
+            "lightning_bolt":  { "name": "Lightning Bolt", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 3, "needs_target": true },
+            "shock":           { "name": "Shock", "kind": "instant", "cost": { "R": 1 }, "effect": "damage", "amount": 2, "needs_target": true },
+            "counterspell":    { "name": "Counterspell", "kind": "instant", "cost": { "U": 2 }, "effect": "counter", "needs_target": true, "targets_stack": true },
+            "giant_growth":    { "name": "Giant Growth", "kind": "instant", "cost": { "G": 1 }, "effect": "pump", "power": 3, "toughness": 3, "needs_target": true, "targets_creature": true },
+            "healing_salve":   { "name": "Healing Salve", "kind": "instant", "cost": { "W": 1 }, "effect": "lifegain", "amount": 3, "needs_target": true },
+            "divination":      { "name": "Divination", "kind": "sorcery", "cost": { "U": 1, "X": 2 }, "effect": "draw", "amount": 2, "needs_target": false }
         };
 
-        // --- Game State (Client Side) ---
-        let gameState = {
-            playerId: "Player1",
-            oppId: "Opponent",
-            activePlayer: "Player1",
-            phase: "PRECOMBAT_MAIN",
-            turn: 1,
-            player: {
-                life: 20, mana: {W:0, U:0, B:0, R:0, G:0, X:0}, deck: 40, grave: 0,
-                hand: [], lands: [], creatures: []
-            },
-            opp: {
-                life: 20, mana: {W:0, U:0, B:0, R:0, G:0, X:0}, deck: 40, grave: 0, handCount: 5,
-                lands: [], creatures: []
-            },
-            stack: []
+        // Deck lists matching the server's deck files exactly
+        const DECK_LISTS = {
+            "red_aggro": [
+                "goblin_guide_001","goblin_guide_002","goblin_guide_003","goblin_guide_004",
+                "goblin_guide_005","goblin_guide_006","goblin_guide_007","goblin_guide_008",
+                "lightning_bolt_001","lightning_bolt_002","lightning_bolt_003","lightning_bolt_004",
+                "lightning_bolt_005","lightning_bolt_006","lightning_bolt_007","lightning_bolt_008",
+                "shock_001","shock_002","shock_003","shock_004",
+                "reckless_wurm_001","reckless_wurm_002","reckless_wurm_003","reckless_wurm_004",
+                "mountain_001","mountain_002","mountain_003","mountain_004","mountain_005",
+                "mountain_006","mountain_007","mountain_008","mountain_009","mountain_010",
+                "mountain_011","mountain_012","mountain_013","mountain_014","mountain_015","mountain_016"
+            ],
+            "green_stompy": [
+                "grizzly_bears_001","grizzly_bears_002","grizzly_bears_003","grizzly_bears_004",
+                "grizzly_bears_005","grizzly_bears_006","grizzly_bears_007","grizzly_bears_008",
+                "grizzly_bears_009","grizzly_bears_010","grizzly_bears_011","grizzly_bears_012",
+                "grizzly_bears_013","grizzly_bears_014","grizzly_bears_015","grizzly_bears_016",
+                "giant_growth_001","giant_growth_002","giant_growth_003","giant_growth_004",
+                "giant_growth_005","giant_growth_006","giant_growth_007","giant_growth_008",
+                "forest_001","forest_002","forest_003","forest_004","forest_005",
+                "forest_006","forest_007","forest_008","forest_009","forest_010",
+                "forest_011","forest_012","forest_013","forest_014","forest_015","forest_016"
+            ],
+            "burn": [
+                "lightning_bolt_001","lightning_bolt_002","lightning_bolt_003",
+                "shock_001","shock_002",
+                "goblin_guide_001","goblin_guide_002",
+                "reckless_wurm_001",
+                "mountain_001","mountain_002","mountain_003","mountain_004","mountain_005","mountain_006"
+            ],
+            "control": [
+                "counterspell_001","counterspell_002",
+                "gray_merchant_001","gray_merchant_002",
+                "wall_of_stone_001",
+                "healing_salve_001",
+                "divination_001",
+                "island_001","island_002","island_003",
+                "swamp_001","swamp_002","swamp_003",
+                "plains_001"
+            ]
         };
 
-        let uiState = {
-            mode: 'normal', // normal, targeting, attacking, blocking
-            selectedCardId: null,
-            pendingAttackers: [],
-            pendingBlockers: {} // attackerId -> [blockerIds]
-        };
-        
-        let demoMode = false;
-        let cardIdCounter = 1;
+        // =====================================================================
+        // CONNECTION & PROTOCOL STATE
+        // =====================================================================
+        let ws = null;              // WebSocket to gui_bridge.py
+        let playerId = '';          // our player_id
+        let oppId = '';             // opponent player_id (discovered from state)
+        let priorityToken = null;   // seq_num from last PRIORITY_GRANT
+        let requestToken = null;    // seq_num for mulligan/combat/discard requests
+        let lastServerSeq = 0;     // for CONCEDE
+        let hasPriority = false;    // whether we currently hold priority
+        let serverState = {};       // last GAME_STATE_UPDATE state object
+        let mulliganCount = 0;     // local mulligan tracker
 
-        // --- Utility Functions ---
-        function getCard(id) {
-            let parts = id.split('_');
-            let idx = parts.pop();
-            let base = parts.join('_');
-            return CARDS[base];
+        // UI interaction state
+        let uiMode = 'normal';     // normal, targeting, attacking, blocking, discarding, mulligan_bottom
+        let selectedCardId = null;  // card selected for casting/targeting
+        let pendingAttackers = []; // creature IDs selected as attackers
+        let pendingBlockers = [];  // [{creature_id, blocking_id}]
+        let blockingCreature = null; // creature being assigned as blocker
+        let selectedBottomCards = []; // cards selected to put on bottom (mulligan)
+        let discardSelection = [];  // cards selected for discard
+
+        // =====================================================================
+        // UTILITY FUNCTIONS
+        // =====================================================================
+        function baseName(cardInstanceId) {
+            const parts = cardInstanceId.rsplit ? cardInstanceId.split('_') : cardInstanceId.split('_');
+            // Card IDs are like "lightning_bolt_001" — the last segment is the number
+            if (parts.length >= 2 && /^\d+$/.test(parts[parts.length - 1])) {
+                return parts.slice(0, -1).join('_');
+            }
+            return cardInstanceId;
         }
-        
-        function createUniqueId(baseId) {
-            return `${baseId}_${cardIdCounter++}`;
+
+        function cardDef(cardInstanceId) {
+            return CARDS[baseName(cardInstanceId)];
         }
 
-        function log(msg, type='sys') {
+        function cardName(cardInstanceId) {
+            const d = cardDef(cardInstanceId);
+            return d ? d.name : cardInstanceId;
+        }
+
+        function log(msg, type = 'sys') {
             const logEl = document.getElementById('game-log');
             const div = document.createElement('div');
             div.className = `log-entry log-${type}`;
@@ -800,11 +943,22 @@
             logEl.scrollTop = logEl.scrollHeight;
         }
 
+        function setConnectionStatus(status, text) {
+            const el = document.getElementById('conn-status');
+            el.className = `connection-status ${status}`;
+            el.querySelector('span').textContent = text;
+        }
+
         function getManaHTML(cost) {
             if (!cost) return '';
             let html = '';
+            // Show generic mana first
+            if (cost.X) {
+                html += `<div class="mana x">${cost.X}</div>`;
+            }
             for (let [color, amt] of Object.entries(cost)) {
-                for (let i=0; i<amt; i++) {
+                if (color === 'X') continue;
+                for (let i = 0; i < amt; i++) {
                     html += `<div class="mana ${color.toLowerCase()}">${color}</div>`;
                 }
             }
@@ -813,38 +967,384 @@
 
         function getCardArt(cardBaseId) {
             const icons = {
-                'land': '🏔️', 'creature': '👾', 'instant': '⚡', 'sorcery': '✨',
                 'mountain': '🌋', 'island': '🌊', 'forest': '🌲', 'swamp': '💀', 'plains': '☀️',
-                'lightning_bolt': '🌩️', 'shock': '💥', 'goblin_guide': '👺', 'grizzly_bears': '🐻'
+                'goblin_guide': '👺', 'grizzly_bears': '🐻', 'wall_of_stone': '🧱',
+                'reckless_wurm': '🐉', 'youthful_knight': '⚔️', 'gray_merchant': '💰',
+                'festering_imp': '🦇', 'lightning_bolt': '🌩️', 'shock': '💥',
+                'counterspell': '🛡️', 'giant_growth': '🌿', 'healing_salve': '💚',
+                'divination': '🔮'
             };
-            return icons[cardBaseId] || icons[CARDS[cardBaseId]?.kind] || '🎴';
+            const fallback = {
+                'land': '🏔️', 'creature': '👾', 'instant': '⚡', 'sorcery': '✨'
+            };
+            return icons[cardBaseId] || fallback[CARDS[cardBaseId]?.kind] || '🎴';
         }
 
-        // --- Render Functions ---
-        function renderCardHTML(uniqueId, cardData, isOpponent = false, zone = 'hand') {
-            const baseId = uniqueId.split('_').slice(0, -1).join('_');
-            const c = CARDS[baseId] || cardData;
-            if (!c) return '';
-            
-            const costHtml = getManaHTML(c.cost);
-            const ptHtml = c.kind === 'creature' ? `<div class="card-pt">${c.power}/${c.toughness}</div>` : '';
-            
-            let classes = `card ${c.kind}`;
-            if (cardData.tapped) classes += ' tapped';
-            
-            let extraHtml = '';
-            if (cardData.sick) extraHtml += `<div class="sick">💤</div>`;
-            if (cardData.damage > 0) extraHtml += `<div class="damage-token">${cardData.damage}</div>`;
+        // =====================================================================
+        // WEBSOCKET CONNECTION
+        // =====================================================================
+        function connectAndReady() {
+            const host = document.getElementById('host-ip').value;
+            const port = document.getElementById('host-port').value;
+            playerId = document.getElementById('player-name').value.trim();
+            const deckKey = document.getElementById('deck-select').value;
+
+            if (!playerId) {
+                document.getElementById('lobby-status').innerText = 'Please enter a player name.';
+                return;
+            }
+
+            document.getElementById('lobby-status').innerText = 'Connecting to bridge...';
+            document.getElementById('btn-connect').disabled = true;
+            setConnectionStatus('connecting', 'Connecting...');
+
+            try {
+                ws = new WebSocket(`ws://${host}:${port}`);
+            } catch (e) {
+                document.getElementById('lobby-status').innerText = `Connection failed: ${e.message}`;
+                document.getElementById('btn-connect').disabled = false;
+                setConnectionStatus('disconnected', 'Failed');
+                return;
+            }
+
+            ws.onopen = () => {
+                setConnectionStatus('connected', 'Connected');
+                document.getElementById('lobby-status').innerText = 'Connected! Sending PLAYER_READY...';
+
+                // Send PLAYER_READY with deck list
+                const deck = DECK_LISTS[deckKey];
+                sendPDU({
+                    type: 'PLAYER_READY',
+                    seq_num: 1,
+                    player_id: playerId,
+                    deck_list: deck
+                });
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const pdu = JSON.parse(event.data);
+                    handlePDU(pdu);
+                } catch (e) {
+                    console.error('Failed to parse PDU:', e, event.data);
+                }
+            };
+
+            ws.onclose = () => {
+                setConnectionStatus('disconnected', 'Disconnected');
+                hasPriority = false;
+                console.log('WebSocket closed');
+            };
+
+            ws.onerror = (e) => {
+                setConnectionStatus('disconnected', 'Error');
+                document.getElementById('lobby-status').innerText =
+                    'Connection failed. Make sure gui_bridge.py is running!';
+                document.getElementById('btn-connect').disabled = false;
+                console.error('WebSocket error:', e);
+            };
+        }
+
+        function sendPDU(pdu) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(pdu));
+                console.log('SEND:', pdu);
+            } else {
+                log('Not connected to server!', 'alert');
+            }
+        }
+
+        // =====================================================================
+        // PDU HANDLER — processes all server messages
+        // =====================================================================
+        function handlePDU(pdu) {
+            const type = pdu.type;
+            console.log('RECV:', pdu);
+
+            if (type !== 'PONG') {
+                lastServerSeq = pdu.seq_num || lastServerSeq;
+            }
+
+            switch (type) {
+                case 'GAME_STATE_UPDATE':
+                    handleGameStateUpdate(pdu);
+                    break;
+                case 'PRIORITY_GRANT':
+                    handlePriorityGrant(pdu);
+                    break;
+                case 'PHASE_TRANSITION':
+                    handlePhaseTransition(pdu);
+                    break;
+                case 'STACK_PUSH':
+                    handleStackPush(pdu);
+                    break;
+                case 'STACK_RESOLVE':
+                    handleStackResolve(pdu);
+                    break;
+                case 'COMBAT_DAMAGE_RESULT':
+                    handleCombatDamage(pdu);
+                    break;
+                case 'GAME_OVER':
+                    handleGameOver(pdu);
+                    break;
+                case 'TRIGGER_CHOICE':
+                    handleTriggerChoice(pdu);
+                    break;
+                case 'TRIGGER_ORDER':
+                    handleTriggerOrder(pdu);
+                    break;
+                case 'ERROR':
+                    handleError(pdu);
+                    break;
+                case 'PONG':
+                    // heartbeat response, ignore
+                    break;
+                default:
+                    console.log('Unknown PDU type:', type, pdu);
+            }
+        }
+
+        // =====================================================================
+        // GAME STATE UPDATE — the core state synchronization
+        // =====================================================================
+        function handleGameStateUpdate(pdu) {
+            const state = pdu.state;
+            serverState = state;
+            requestToken = pdu.seq_num;  // state updates double as request tokens
+
+            const phase = state.phase;
+
+            if (phase === 'LOBBY') {
+                document.getElementById('lobby-status').innerText =
+                    `Ready: ${state.players_ready}/2. Waiting for: ${state.waiting_for.join(', ') || 'nobody'}`;
+                if (state.players_ready === 2) {
+                    document.getElementById('lobby-status').innerText = 'Both players ready! Starting...';
+                }
+                return;
+            }
+
+            if (phase === 'GAME_SETUP') {
+                document.getElementById('lobby-status').innerText = 'Game starting — dealing hands...';
+                return;
+            }
+
+            // Discover opponent ID
+            const lifeTotals = state.life_totals || {};
+            for (const pid in lifeTotals) {
+                if (pid !== playerId) {
+                    oppId = pid;
+                    break;
+                }
+            }
+
+            if (phase === 'MULLIGAN') {
+                showMulliganScreen(state);
+                return;
+            }
+
+            // CLEANUP phase with >7 cards means we need to discard
+            if (phase === 'CLEANUP') {
+                const hand = (state.hand || {})[playerId] || [];
+                if (hand.length > 7) {
+                    uiMode = 'discarding';
+                    discardSelection = [];
+                    log(`Discard ${hand.length - 7} card(s) to reach hand size 7.`, 'alert');
+                }
+            }
+
+            // Transition to game screen
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('mulligan-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            renderFromServerState(state);
+        }
+
+        // =====================================================================
+        // RENDER the game board from server state
+        // =====================================================================
+        function renderFromServerState(state) {
+            if (!state) return;
+
+            const lifeTotals = state.life_totals || {};
+            const battlefield = state.battlefield || {};
+            const hand = (state.hand || {})[playerId] || [];
+            const handCounts = state.hand_counts || {};
+            const libCounts = state.library_counts || {};
+            const graveyards = state.graveyard || {};
+            const stack = state.stack || [];
+
+            // Life totals
+            document.getElementById('player-life').innerText = lifeTotals[playerId] || 20;
+            document.getElementById('opp-life').innerText = lifeTotals[oppId] || 20;
+
+            // Names
+            document.getElementById('player-name-display').innerText = playerId;
+            document.getElementById('opp-name').innerText = oppId || 'Opponent';
+
+            // Deck & grave counts
+            document.getElementById('player-deck-count').innerText = libCounts[playerId] || 0;
+            document.getElementById('opp-deck-count').innerText = libCounts[oppId] || 0;
+            document.getElementById('opp-hand-count').innerText = handCounts[oppId] || 0;
+
+            // Graveyard
+            const playerGrave = graveyards[playerId] || [];
+            const oppGrave = graveyards[oppId] || [];
+            document.getElementById('player-grave-count').innerText = playerGrave.length;
+            document.getElementById('opp-grave-count').innerText = oppGrave.length;
+            document.getElementById('player-grave-tooltip').innerText =
+                playerGrave.length ? playerGrave.map(c => cardName(c)).join('\n') : 'Empty';
+            document.getElementById('opp-grave-tooltip').innerText =
+                oppGrave.length ? oppGrave.map(c => cardName(c)).join('\n') : 'Empty';
+
+            // Turn indicator
+            const isMyTurn = state.active_player === playerId;
+            if (isMyTurn) {
+                document.getElementById('player-turn-indicator').innerText = `Turn ${state.turn} — Active`;
+                document.getElementById('opp-turn-indicator').innerText = '';
+            } else {
+                document.getElementById('player-turn-indicator').innerText = '';
+                document.getElementById('opp-turn-indicator').innerText = `Turn ${state.turn} — Active`;
+            }
+
+            // Mana pool — show available untapped lands by color
+            const playerMana = computeAvailableMana(battlefield[playerId] || []);
+            const oppMana = computeAvailableMana(battlefield[oppId] || []);
+            renderManaPool('player-mana', playerMana);
+            renderManaPool('opp-mana', oppMana);
+
+            // Battlefield — separate lands and creatures
+            const myPerms = battlefield[playerId] || [];
+            const oppPerms = battlefield[oppId] || [];
+
+            const myLands = myPerms.filter(p => !('power' in p));
+            const myCreatures = myPerms.filter(p => 'power' in p);
+            const oppLands = oppPerms.filter(p => !('power' in p));
+            const oppCreatures = oppPerms.filter(p => 'power' in p);
+
+            document.getElementById('player-lands').innerHTML =
+                myLands.map(p => renderBattlefieldCard(p, false)).join('');
+            document.getElementById('player-creatures').innerHTML =
+                myCreatures.map(p => renderBattlefieldCard(p, false)).join('');
+            document.getElementById('opp-lands').innerHTML =
+                oppLands.map(p => renderBattlefieldCard(p, true)).join('');
+            document.getElementById('opp-creatures').innerHTML =
+                oppCreatures.map(p => renderBattlefieldCard(p, true)).join('');
+
+            // Player hand
+            document.getElementById('player-hand').innerHTML =
+                hand.map(cid => renderHandCard(cid)).join('');
+
+            // Opponent hand (card backs)
+            const oppHandCount = handCounts[oppId] || 0;
+            document.getElementById('opp-hand').innerHTML =
+                Array(oppHandCount).fill('<div class="card-back"></div>').join('');
+
+            // Stack
+            document.getElementById('stack-zone').innerHTML =
+                stack.map(item => renderStackCard(item)).join('');
+
+            // Phase indicator
+            document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
+            const phase = state.phase || '';
+            let phaseId = 'phase-precombat';
+            if (phase.includes('UPKEEP')) phaseId = 'phase-upkeep';
+            else if (phase.includes('DRAW')) phaseId = 'phase-draw';
+            else if (phase.includes('COMBAT') || phase.includes('ATTACKER') || phase.includes('BLOCKER') || phase.includes('DAMAGE_ORDER')) phaseId = 'phase-combat';
+            else if (phase.includes('POSTCOMBAT')) phaseId = 'phase-postcombat';
+            else if (phase.includes('END') || phase.includes('CLEANUP')) phaseId = 'phase-end';
+            else if (phase.includes('PRECOMBAT')) phaseId = 'phase-precombat';
+            document.getElementById(phaseId).classList.add('active');
+
+            // Action buttons visibility
+            updateActionButtons(state);
+
+            // Attach click listeners
+            attachCardListeners();
+        }
+
+        function computeAvailableMana(perms) {
+            const mana = {};
+            for (const p of perms) {
+                if (!('power' in p) && !p.tapped) {
+                    const d = cardDef(p.id);
+                    if (d && d.produces) {
+                        mana[d.produces] = (mana[d.produces] || 0) + 1;
+                    }
+                }
+            }
+            return mana;
+        }
+
+        function renderManaPool(elementId, manaObj) {
+            const html = Object.entries(manaObj)
+                .filter(([c, v]) => v > 0)
+                .map(([c, v]) => `<div class="mana ${c.toLowerCase()}">${v}</div>`)
+                .join('');
+            document.getElementById(elementId).innerHTML = html;
+        }
+
+        // =====================================================================
+        // CARD RENDERING
+        // =====================================================================
+        function renderHandCard(cardInstanceId) {
+            const d = cardDef(cardInstanceId);
+            if (!d) return '';
+            const base = baseName(cardInstanceId);
+            const costHtml = getManaHTML(d.cost);
+
+            let classes = `card ${d.kind}`;
+            if (uiMode === 'discarding' && discardSelection.includes(cardInstanceId)) {
+                classes += ' selected';
+            }
 
             return `
-                <div class="${classes}" id="${uniqueId}" data-id="${uniqueId}" data-zone="${zone}" data-owner="${isOpponent ? 'opp' : 'player'}">
+                <div class="${classes}" id="card-${cardInstanceId}" 
+                     data-id="${cardInstanceId}" data-zone="hand" data-owner="player">
                     <div class="card-inner">
                         <div class="card-header">
-                            <span class="card-name">${c.name}</span>
+                            <span class="card-name">${d.name}</span>
                             <div class="card-cost">${costHtml}</div>
                         </div>
-                        <div class="card-art">${getCardArt(baseId)}</div>
-                        <div class="card-type">${c.kind.toUpperCase()}</div>
+                        <div class="card-art">${getCardArt(base)}</div>
+                        <div class="card-type">${d.kind.toUpperCase()}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBattlefieldCard(perm, isOpponent) {
+            const d = cardDef(perm.id);
+            if (!d) return '';
+            const base = baseName(perm.id);
+            const costHtml = getManaHTML(d.cost);
+            const isCreature = 'power' in perm;
+
+            let ptHtml = '';
+            if (isCreature) {
+                ptHtml = `<div class="card-pt">${perm.power}/${perm.toughness}</div>`;
+            }
+
+            let classes = `card ${d.kind}`;
+            if (perm.tapped) classes += ' tapped';
+            if (pendingAttackers.includes(perm.id)) classes += ' attacking';
+            if (pendingBlockers.some(b => b.creature_id === perm.id)) classes += ' blocking';
+
+            let extraHtml = '';
+            if (isCreature && perm.summoning_sick) extraHtml += `<div class="sick">💤</div>`;
+            if (isCreature && perm.damage > 0) extraHtml += `<div class="damage-token">${perm.damage}</div>`;
+
+            const owner = isOpponent ? 'opp' : 'player';
+            return `
+                <div class="${classes}" id="card-${perm.id}" 
+                     data-id="${perm.id}" data-zone="battlefield" data-owner="${owner}">
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <span class="card-name">${d.name}</span>
+                            <div class="card-cost">${costHtml}</div>
+                        </div>
+                        <div class="card-art">${getCardArt(base)}</div>
+                        <div class="card-type">${d.kind.toUpperCase()}</div>
                         ${ptHtml}
                         ${extraHtml}
                     </div>
@@ -852,279 +1352,753 @@
             `;
         }
 
-        function renderGameState() {
-            // Stats
-            document.getElementById('player-life').innerText = gameState.player.life;
-            document.getElementById('opp-life').innerText = gameState.opp.life;
-            document.getElementById('player-deck-count').innerText = gameState.player.deck;
-            document.getElementById('opp-deck-count').innerText = gameState.opp.deck;
-            document.getElementById('player-hand-count') ? document.getElementById('player-hand-count').innerText = gameState.player.hand.length : null;
-            document.getElementById('opp-hand-count').innerText = gameState.opp.handCount;
-            
-            // Turn indicator
-            if (gameState.activePlayer === gameState.playerId) {
-                document.getElementById('player-turn-indicator').innerText = `Turn ${gameState.turn} - Active`;
-                document.getElementById('opp-turn-indicator').innerText = '';
-            } else {
-                document.getElementById('player-turn-indicator').innerText = '';
-                document.getElementById('opp-turn-indicator').innerText = `Turn ${gameState.turn} - Active`;
-            }
+        function renderStackCard(item) {
+            const d = cardDef(item.source || item.source_id || '');
+            const name = d ? d.name : (item.source || 'Unknown');
+            const kind = d ? d.kind : 'instant';
+            const targets = item.targets || [];
+            const targetStr = targets.length ? ` → ${targets.map(t => cardName(t)).join(', ')}` : '';
 
-            // Mana
-            const rMana = (pool) => Object.entries(pool).filter(([c,v])=>v>0).map(([c,v]) => `<div class="mana ${c.toLowerCase()}">${v}</div>`).join('');
-            document.getElementById('player-mana').innerHTML = rMana(gameState.player.mana);
-            document.getElementById('opp-mana').innerHTML = rMana(gameState.opp.mana);
-
-            // Zones
-            document.getElementById('player-hand').innerHTML = gameState.player.hand.map(c => renderCardHTML(c.id, c, false, 'hand')).join('');
-            document.getElementById('player-lands').innerHTML = gameState.player.lands.map(c => renderCardHTML(c.id, c, false, 'battlefield')).join('');
-            document.getElementById('player-creatures').innerHTML = gameState.player.creatures.map(c => renderCardHTML(c.id, c, false, 'battlefield')).join('');
-            
-            document.getElementById('opp-lands').innerHTML = gameState.opp.lands.map(c => renderCardHTML(c.id, c, true, 'battlefield')).join('');
-            document.getElementById('opp-creatures').innerHTML = gameState.opp.creatures.map(c => renderCardHTML(c.id, c, true, 'battlefield')).join('');
-            
-            // Opp Hand (hidden)
-            document.getElementById('opp-hand').innerHTML = Array(gameState.opp.handCount).fill('<div class="card-back"></div>').join('');
-
-            // Stack
-            document.getElementById('stack-zone').innerHTML = gameState.stack.map(c => renderCardHTML(c.id, c, c.owner==='opp', 'stack')).join('');
-
-            // Phases
-            document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
-            let phaseId = 'phase-precombat';
-            if (gameState.phase.includes('UPKEEP')) phaseId = 'phase-upkeep';
-            if (gameState.phase.includes('DRAW')) phaseId = 'phase-draw';
-            if (gameState.phase.includes('COMBAT')) phaseId = 'phase-combat';
-            if (gameState.phase.includes('POSTCOMBAT')) phaseId = 'phase-postcombat';
-            if (gameState.phase.includes('END') || gameState.phase.includes('CLEANUP')) phaseId = 'phase-end';
-            document.getElementById(phaseId).classList.add('active');
-
-            // Action Buttons
-            const isMyTurn = gameState.activePlayer === gameState.playerId;
-            document.getElementById('btn-attack').classList.toggle('hidden', !(isMyTurn && gameState.phase === 'DECLARE_ATTACKERS'));
-            document.getElementById('btn-block').classList.toggle('hidden', !(!isMyTurn && gameState.phase === 'DECLARE_BLOCKERS'));
-            document.getElementById('btn-pass').classList.toggle('hidden', uiState.mode !== 'normal');
-            document.getElementById('btn-cancel').classList.toggle('hidden', uiState.mode === 'normal');
-
-            attachCardListeners();
+            return `
+                <div class="card ${kind} stack-item" data-id="${item.stack_item_id || ''}">
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <span class="card-name">${name}</span>
+                        </div>
+                        <div class="card-art">📜</div>
+                        <div class="card-type" style="font-size:0.45em;">${item.controller || ''}${targetStr}</div>
+                    </div>
+                </div>
+            `;
         }
 
-        // --- Interaction Logic ---
+        // =====================================================================
+        // ACTION BUTTONS
+        // =====================================================================
+        function updateActionButtons(state) {
+            const phase = state.phase || '';
+            const isMyTurn = state.active_player === playerId;
+
+            // Pass priority — show when we have priority
+            document.getElementById('btn-pass').classList.toggle('hidden',
+                uiMode !== 'normal' || !hasPriority);
+
+            // Attack button — show during DECLARE_ATTACKERS when it's our turn
+            document.getElementById('btn-attack').classList.toggle('hidden',
+                phase !== 'DECLARE_ATTACKERS' || !isMyTurn);
+
+            // Block button — show during DECLARE_BLOCKERS when it's NOT our turn
+            document.getElementById('btn-block').classList.toggle('hidden',
+                phase !== 'DECLARE_BLOCKERS' || isMyTurn);
+
+            // Cancel button
+            document.getElementById('btn-cancel').classList.toggle('hidden',
+                uiMode === 'normal');
+
+            // Target player buttons — only during targeting mode for spells that can target players
+            document.getElementById('btn-target-player').classList.toggle('hidden',
+                uiMode !== 'targeting');
+            document.getElementById('btn-target-self').classList.toggle('hidden',
+                uiMode !== 'targeting');
+
+            // Add priority glow to pass button when we have priority
+            const passBtn = document.getElementById('btn-pass');
+            if (hasPriority && uiMode === 'normal') {
+                passBtn.classList.add('priority-glow');
+                passBtn.textContent = 'Pass Priority';
+            } else {
+                passBtn.classList.remove('priority-glow');
+            }
+        }
+
+        // =====================================================================
+        // CARD CLICK HANDLING
+        // =====================================================================
         function attachCardListeners() {
             document.querySelectorAll('.card').forEach(card => {
-                card.onclick = (e) => handleCardClick(card.dataset.id, card.dataset.owner, card.dataset.zone, e);
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    const id = card.dataset.id;
+                    const owner = card.dataset.owner;
+                    const zone = card.dataset.zone;
+                    handleCardClick(id, owner, zone);
+                };
             });
         }
 
-        function handleCardClick(id, owner, zone, e) {
-            e.stopPropagation();
-            if (demoMode) handleDemoClick(id, owner, zone);
-        }
+        function handleCardClick(id, owner, zone) {
+            const d = cardDef(id);
+            if (!d) return;
+            const phase = serverState.phase || '';
 
-        function clearSelection() {
-            uiState.mode = 'normal';
-            uiState.selectedCardId = null;
-            document.querySelectorAll('.selected, .targetable').forEach(el => {
-                el.classList.remove('selected', 'targetable');
-            });
-            renderGameState();
-        }
-
-        function cancelAction() {
-            clearSelection();
-            log("Action cancelled.", 'sys');
-        }
-
-        // --- Demo Mode Logic ---
-        function startDemo() {
-            demoMode = true;
-            document.getElementById('lobby-screen').classList.add('hidden');
-            
-            // Set up a fake game state
-            gameState.player.hand = [
-                {id: createUniqueId('mountain'), tapped: false},
-                {id: createUniqueId('lightning_bolt'), tapped: false},
-                {id: createUniqueId('goblin_guide'), tapped: false}
-            ];
-            gameState.player.lands = [
-                {id: createUniqueId('mountain'), tapped: true},
-                {id: createUniqueId('mountain'), tapped: false}
-            ];
-            gameState.player.creatures = [
-                {id: createUniqueId('reckless_wurm'), tapped: false, damage: 1, sick: false}
-            ];
-            gameState.player.mana = {R: 1, X: 0, W:0, U:0, B:0, G:0};
-
-            gameState.opp.lands = [
-                {id: createUniqueId('island'), tapped: false},
-                {id: createUniqueId('swamp'), tapped: false}
-            ];
-            gameState.opp.creatures = [
-                {id: createUniqueId('grizzly_bears'), tapped: false, damage: 0, sick: false}
-            ];
-            
-            gameState.phase = 'PRECOMBAT_MAIN';
-            
-            document.getElementById('game-screen').classList.remove('hidden');
-            renderGameState();
-            log("Demo mode started. Try clicking cards to play/cast them, or click Pass.", 'sys');
-        }
-
-        function handleDemoClick(id, owner, zone) {
-            const cardObj = findCardObj(id, owner, zone);
-            const baseId = id.split('_').slice(0, -1).join('_');
-            const cardData = CARDS[baseId];
-
-            if (uiState.mode === 'normal') {
+            // === DISCARD MODE ===
+            if (uiMode === 'discarding') {
                 if (owner === 'player' && zone === 'hand') {
-                    if (cardData.kind === 'land') {
-                        // Play land
-                        gameState.player.hand = gameState.player.hand.filter(c => c.id !== id);
-                        gameState.player.lands.push(cardObj);
-                        log(`You played ${cardData.name}.`, 'p1');
-                        renderGameState();
-                    } else if (cardData.needs_target) {
-                        uiState.mode = 'targeting';
-                        uiState.selectedCardId = id;
-                        document.getElementById(id).classList.add('selected');
-                        log(`Select target for ${cardData.name}...`, 'sys');
-                        document.getElementById('btn-pass').classList.add('hidden');
-                        document.getElementById('btn-cancel').classList.remove('hidden');
+                    const idx = discardSelection.indexOf(id);
+                    if (idx >= 0) {
+                        discardSelection.splice(idx, 1);
                     } else {
-                        // Cast spell without target
-                        gameState.player.hand = gameState.player.hand.filter(c => c.id !== id);
-                        gameState.player.mana.R = 0; // fake cost reduction
-                        
-                        if (cardData.kind === 'creature') {
-                            cardObj.sick = true;
-                            gameState.player.creatures.push(cardObj);
-                            log(`You cast ${cardData.name}.`, 'p1');
+                        const hand = (serverState.hand || {})[playerId] || [];
+                        const needed = hand.length - 7;
+                        if (discardSelection.length < needed) {
+                            discardSelection.push(id);
                         }
-                        renderGameState();
                     }
-                } else if (owner === 'player' && zone === 'battlefield' && cardData.kind === 'land' && !cardObj.tapped) {
-                    // Tap land for mana
-                    cardObj.tapped = true;
-                    gameState.player.mana[cardData.produces]++;
-                    log(`Tapped ${cardData.name} for ${cardData.produces}.`, 'sys');
-                    renderGameState();
+                    renderFromServerState(serverState);
+
+                    // Auto-submit when enough cards selected
+                    const hand = (serverState.hand || {})[playerId] || [];
+                    const needed = hand.length - 7;
+                    if (discardSelection.length === needed) {
+                        sendPDU({
+                            type: 'DISCARD',
+                            seq_num: requestToken,
+                            card_ids: discardSelection
+                        });
+                        uiMode = 'normal';
+                        discardSelection = [];
+                        log(`Discarded ${needed} card(s).`, 'p1');
+                    }
                 }
-            } else if (uiState.mode === 'targeting') {
-                // We selected a target
-                const sourceId = uiState.selectedCardId;
-                const sourceBase = sourceId.split('_').slice(0, -1).join('_');
-                const sourceData = CARDS[sourceBase];
-                
-                gameState.player.hand = gameState.player.hand.filter(c => c.id !== sourceId);
-                
-                // Animate to stack
-                const spell = {id: sourceId, owner: 'player'};
-                gameState.stack.push(spell);
-                log(`You cast ${sourceData.name} targeting ${CARDS[baseId].name}.`, 'p1');
-                
-                clearSelection();
-                
-                // Simulate resolution
-                setTimeout(() => {
-                    gameState.stack.pop();
-                    if (zone === 'battlefield' && cardData.kind === 'creature') {
-                        cardObj.damage = (cardObj.damage || 0) + (sourceData.amount || 3);
-                        if (cardObj.damage >= cardData.toughness) {
-                            log(`${CARDS[baseId].name} dies!`, 'sys');
-                            if (owner === 'opp') gameState.opp.creatures = gameState.opp.creatures.filter(c=>c.id!==id);
-                            else gameState.player.creatures = gameState.player.creatures.filter(c=>c.id!==id);
-                        } else {
-                            log(`${CARDS[baseId].name} takes ${sourceData.amount} damage.`, 'sys');
-                        }
-                    } else if (owner === 'opp' && zone !== 'battlefield') {
-                        gameState.opp.life -= (sourceData.amount || 3);
-                        log(`Opponent takes ${sourceData.amount} damage.`, 'sys');
-                        if (gameState.opp.life <= 0) showGameOver('Player1', 'Opponent life reached 0');
+                return;
+            }
+
+            // === TARGETING MODE ===
+            if (uiMode === 'targeting') {
+                // Clicked a valid target (creature on battlefield or stack item)
+                const sourceD = cardDef(selectedCardId);
+                if (!sourceD) return;
+
+                if (sourceD.targets_stack && zone === 'stack') {
+                    // Counterspell targeting stack item
+                    castSpell(selectedCardId, [id]);
+                    return;
+                }
+
+                if (sourceD.targets_creature && zone === 'battlefield') {
+                    // Giant Growth targeting creature
+                    castSpell(selectedCardId, [id]);
+                    return;
+                }
+
+                if (sourceD.needs_target && !sourceD.targets_stack && !sourceD.targets_creature) {
+                    // Damage/lifegain spell — can target creatures or players
+                    if (zone === 'battlefield' && 'power' in (findPermById(id) || {})) {
+                        castSpell(selectedCardId, [id]);
+                        return;
                     }
-                    renderGameState();
-                }, 1500);
+                }
+                return;
+            }
+
+            // === ATTACKING MODE ===
+            if (uiMode === 'attacking' || phase === 'DECLARE_ATTACKERS') {
+                if (owner === 'player' && zone === 'battlefield' && 'power' in (findPermById(id) || {})) {
+                    const perm = findPermById(id);
+                    if (perm && !perm.tapped && !perm.summoning_sick) {
+                        const idx = pendingAttackers.indexOf(id);
+                        if (idx >= 0) {
+                            pendingAttackers.splice(idx, 1);
+                        } else {
+                            pendingAttackers.push(id);
+                        }
+                        renderFromServerState(serverState);
+                    } else if (perm && perm.summoning_sick) {
+                        log(`${cardName(id)} has summoning sickness.`, 'sys');
+                    }
+                }
+                return;
+            }
+
+            // === BLOCKING MODE ===
+            if (uiMode === 'blocking' || phase === 'DECLARE_BLOCKERS') {
+                if (blockingCreature === null) {
+                    // First click: select our creature as blocker
+                    if (owner === 'player' && zone === 'battlefield') {
+                        const perm = findPermById(id);
+                        if (perm && !perm.tapped && 'power' in perm) {
+                            blockingCreature = id;
+                            log(`Selected ${cardName(id)} as blocker. Now click an attacking creature.`, 'sys');
+                            const el = document.getElementById(`card-${id}`);
+                            if (el) el.classList.add('selected');
+                        }
+                    }
+                } else {
+                    // Second click: select opponent's attacking creature
+                    if (owner === 'opp' && zone === 'battlefield') {
+                        const perm = findPermById(id);
+                        if (perm && perm.tapped) {  // attackers are tapped
+                            pendingBlockers.push({
+                                creature_id: blockingCreature,
+                                blocking_id: id
+                            });
+                            log(`${cardName(blockingCreature)} blocking ${cardName(id)}`, 'p1');
+                            blockingCreature = null;
+                            renderFromServerState(serverState);
+                        }
+                    } else {
+                        // Deselect
+                        blockingCreature = null;
+                        document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                    }
+                }
+                return;
+            }
+
+            // === NORMAL MODE ===
+            if (!hasPriority && phase !== 'DECLARE_ATTACKERS' && phase !== 'DECLARE_BLOCKERS') {
+                log('Waiting for priority...', 'sys');
+                return;
+            }
+
+            if (owner === 'player' && zone === 'hand') {
+                if (d.kind === 'land') {
+                    // Play a land
+                    if (serverState.land_played_this_turn) {
+                        log('Already played a land this turn.', 'sys');
+                        return;
+                    }
+                    sendPDU({
+                        type: 'PLAY_LAND',
+                        seq_num: priorityToken,
+                        card_id: id
+                    });
+                    log(`Playing ${d.name}...`, 'p1');
+                } else if (d.needs_target) {
+                    // Enter targeting mode
+                    uiMode = 'targeting';
+                    selectedCardId = id;
+                    const el = document.getElementById(`card-${id}`);
+                    if (el) el.classList.add('selected');
+
+                    if (d.targets_stack) {
+                        log(`Select a spell on the stack to counter with ${d.name}.`, 'alert');
+                    } else if (d.targets_creature) {
+                        log(`Select a creature to target with ${d.name}.`, 'alert');
+                    } else {
+                        log(`Select a target for ${d.name}, or click "Target Opponent" / "Target Self".`, 'alert');
+                    }
+                    updateActionButtons(serverState);
+                } else {
+                    // Cast without target (creatures, divination, etc.)
+                    castSpell(id, []);
+                }
+            } else if (owner === 'player' && zone === 'battlefield') {
+                // Tap land for mana — this is handled server-side via CAST_SPELL mana_payment
+                // In the GUI, just show info
+                if (d.kind === 'land' && !findPermById(id)?.tapped) {
+                    log(`${d.name} — mana is auto-tapped when you cast spells.`, 'sys');
+                }
             }
         }
 
-        function findCardObj(id, owner, zone) {
-            let p = owner === 'opp' ? gameState.opp : gameState.player;
-            if (zone === 'hand') return p.hand.find(c=>c.id===id);
-            if (zone === 'battlefield') return p.creatures.find(c=>c.id===id) || p.lands.find(c=>c.id===id);
+        function findPermById(id) {
+            if (!serverState.battlefield) return null;
+            for (const pid in serverState.battlefield) {
+                for (const p of serverState.battlefield[pid]) {
+                    if (p.id === id) return p;
+                }
+            }
             return null;
         }
 
-        function actionPass() {
-            if (!demoMode) return;
-            const phases = ['PRECOMBAT_MAIN', 'BEGINNING_OF_COMBAT', 'DECLARE_ATTACKERS', 'DECLARE_BLOCKERS', 'COMBAT_DAMAGE', 'POSTCOMBAT_MAIN', 'END_STEP'];
-            let idx = phases.indexOf(gameState.phase);
-            if (idx < phases.length - 1) {
-                gameState.phase = phases[idx + 1];
-                log(`Phase changed to ${gameState.phase.replace(/_/g, ' ')}`, 'sys');
-            } else {
-                gameState.activePlayer = gameState.activePlayer === 'Player1' ? 'Opponent' : 'Player1';
-                gameState.phase = 'UPKEEP';
-                gameState.turn++;
-                log(`--- Turn ${gameState.turn}: ${gameState.activePlayer}'s Turn ---`, 'sys');
-                
-                // Untap all
-                let p = gameState.activePlayer === 'Player1' ? gameState.player : gameState.opp;
-                p.lands.forEach(c => c.tapped = false);
-                p.creatures.forEach(c => { c.tapped = false; c.sick = false; c.damage = 0; });
-                
-                setTimeout(() => {
-                    gameState.phase = 'PRECOMBAT_MAIN';
-                    if (gameState.activePlayer === 'Player1' && gameState.player.deck > 0) {
-                        gameState.player.hand.push({id: createUniqueId('mountain'), tapped: false});
-                        gameState.player.deck--;
-                        log("You drew a card.", 'sys');
-                    }
-                    renderGameState();
-                }, 1000);
+        // =====================================================================
+        // SPELL CASTING (with auto mana payment)
+        // =====================================================================
+        function castSpell(cardId, targets) {
+            const manaPayment = autoMana(cardId);
+            sendPDU({
+                type: 'CAST_SPELL',
+                seq_num: priorityToken,
+                card_id: cardId,
+                targets: targets,
+                mana_payment: manaPayment
+            });
+            log(`Casting ${cardName(cardId)}...`, 'p1');
+            cancelAction();
+        }
+
+        function autoMana(cardId) {
+            const d = cardDef(cardId);
+            if (!d || !d.cost) return {};
+            const cost = { ...d.cost };
+            const myPerms = (serverState.battlefield || {})[playerId] || [];
+
+            // Count available mana
+            const avail = {};
+            for (const p of myPerms) {
+                const pd = cardDef(p.id);
+                if (pd && pd.kind === 'land' && !p.tapped && pd.produces) {
+                    avail[pd.produces] = (avail[pd.produces] || 0) + 1;
+                }
             }
-            renderGameState();
+
+            // Pay colored costs first
+            const pay = {};
+            for (const [color, n] of Object.entries(cost)) {
+                if (color === 'X') continue;
+                pay[color] = (pay[color] || 0) + n;
+                avail[color] = (avail[color] || 0) - n;
+            }
+
+            // Pay generic costs with whatever's available
+            const generic = cost.X || 0;
+            for (let i = 0; i < generic; i++) {
+                let bestColor = null;
+                let bestCount = 0;
+                for (const [c, count] of Object.entries(avail)) {
+                    if (count > bestCount) {
+                        bestColor = c;
+                        bestCount = count;
+                    }
+                }
+                if (bestColor && bestCount > 0) {
+                    pay[bestColor] = (pay[bestColor] || 0) + 1;
+                    avail[bestColor]--;
+                }
+            }
+            return pay;
         }
 
-        function actionAttack() {
-            log("Click your creatures to attack.", 'sys');
-        }
-        function actionBlock() {
-            log("Click your creatures then attacking creatures to block.", 'sys');
-        }
-
-        // --- Network / Connection (Dummy) ---
-        function startGame() {
-            document.getElementById('lobby-status').innerText = "Connecting to server...";
-            setTimeout(() => {
-                document.getElementById('lobby-status').innerText = "Connection failed (No server). Try Demo Mode!";
-            }, 1000);
+        // =====================================================================
+        // TARGET PLAYER BUTTONS
+        // =====================================================================
+        function targetOpponent() {
+            if (uiMode === 'targeting' && selectedCardId) {
+                castSpell(selectedCardId, [oppId]);
+            }
         }
 
-        function keepHand() {
-            document.getElementById('mulligan-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
+        function targetSelf() {
+            if (uiMode === 'targeting' && selectedCardId) {
+                castSpell(selectedCardId, [playerId]);
+            }
         }
-        
-        function mulligan() {
-            log("Mulligan not implemented in dummy.", 'sys');
+
+        // =====================================================================
+        // ACTION HANDLERS
+        // =====================================================================
+        function actionPass() {
+            if (!hasPriority) {
+                log('You don\'t have priority.', 'sys');
+                return;
+            }
+            sendPDU({
+                type: 'PRIORITY_PASS',
+                seq_num: priorityToken
+            });
+            hasPriority = false;
+            updateActionButtons(serverState);
+            log('Passed priority.', 'sys');
         }
-        
+
+        function confirmAttackers() {
+            const opp = oppId;
+            sendPDU({
+                type: 'DECLARE_ATTACKERS',
+                seq_num: requestToken,
+                attackers: pendingAttackers.map(id => ({
+                    creature_id: id,
+                    target: opp
+                }))
+            });
+            if (pendingAttackers.length > 0) {
+                log(`Attacking with: ${pendingAttackers.map(id => cardName(id)).join(', ')}`, 'p1');
+            } else {
+                log('Skipping attack.', 'p1');
+            }
+            pendingAttackers = [];
+            uiMode = 'normal';
+        }
+
+        function confirmBlockers() {
+            sendPDU({
+                type: 'DECLARE_BLOCKERS',
+                seq_num: requestToken,
+                blockers: pendingBlockers
+            });
+            if (pendingBlockers.length > 0) {
+                log(`Blocking: ${pendingBlockers.map(b => `${cardName(b.creature_id)} blocks ${cardName(b.blocking_id)}`).join(', ')}`, 'p1');
+            } else {
+                log('Not blocking.', 'p1');
+            }
+            pendingBlockers = [];
+            blockingCreature = null;
+            uiMode = 'normal';
+        }
+
+        function cancelAction() {
+            uiMode = 'normal';
+            selectedCardId = null;
+            pendingAttackers = [];
+            pendingBlockers = [];
+            blockingCreature = null;
+            discardSelection = [];
+            document.querySelectorAll('.selected, .targetable, .attacking, .blocking').forEach(el => {
+                el.classList.remove('selected', 'targetable', 'attacking', 'blocking');
+            });
+            if (serverState.phase) {
+                updateActionButtons(serverState);
+            }
+        }
+
         function actionConcede() {
-            showGameOver('Opponent', 'Player conceded');
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                sendPDU({
+                    type: 'CONCEDE',
+                    seq_num: lastServerSeq,
+                    player_id: playerId
+                });
+                log('You conceded.', 'alert');
+            }
         }
-        
-        function showGameOver(winner, reason) {
+
+        // =====================================================================
+        // PRIORITY GRANT
+        // =====================================================================
+        function handlePriorityGrant(pdu) {
+            priorityToken = pdu.seq_num;
+            hasPriority = true;
+            const timeLimit = (pdu.time_limit_ms || 60000) / 1000;
+            log(`You have priority (${timeLimit}s).`, 'alert');
+            updateActionButtons(serverState);
+        }
+
+        // =====================================================================
+        // PHASE TRANSITION
+        // =====================================================================
+        function handlePhaseTransition(pdu) {
+            requestToken = pdu.seq_num;  // combat phases use this
+            const to = pdu.to_phase;
+            const from = pdu.from_phase;
+
+            if (to === 'UPKEEP') {
+                const who = pdu.active_player === playerId ? 'Your turn' : `${pdu.active_player}'s turn`;
+                log(`━━━ Turn ${pdu.turn}: ${who} ━━━`, 'alert');
+            }
+
+            if (to === 'DECLARE_ATTACKERS') {
+                const isMyTurn = pdu.active_player === playerId;
+                if (isMyTurn) {
+                    uiMode = 'attacking';
+                    pendingAttackers = [];
+                    log('Declare attackers — click creatures, then Confirm.', 'alert');
+                }
+            }
+
+            if (to === 'DECLARE_BLOCKERS') {
+                const isMyTurn = pdu.active_player === playerId;
+                if (!isMyTurn) {
+                    uiMode = 'blocking';
+                    pendingBlockers = [];
+                    blockingCreature = null;
+                    log('Declare blockers — click your creature, then an attacker. Confirm when done.', 'alert');
+                }
+            }
+
+            if (to === 'ASSIGN_DAMAGE_ORDER') {
+                // Auto-pass damage order for simplicity
+                // The server handles default ordering
+                log('Damage order phase.', 'sys');
+            }
+
+            // Update phase on server state for rendering
+            if (serverState) {
+                serverState.phase = to;
+                if (pdu.active_player) serverState.active_player = pdu.active_player;
+                if (pdu.turn) serverState.turn = pdu.turn;
+                renderFromServerState(serverState);
+            }
+        }
+
+        // =====================================================================
+        // STACK EVENTS
+        // =====================================================================
+        function handleStackPush(pdu) {
+            const source = pdu.source || '';
+            const targets = pdu.targets || [];
+            const controller = pdu.controller || '';
+            const itemType = pdu.item_type || '';
+
+            let msg;
+            if (itemType === 'TRIGGER_ABILITY') {
+                msg = `[stack] Trigger from ${cardName(source)}`;
+            } else {
+                msg = `[stack] ${controller} casts ${cardName(source)}`;
+            }
+            if (targets.length) {
+                msg += ` targeting ${targets.map(t => cardName(t)).join(', ')}`;
+            }
+            log(msg, 'sys');
+        }
+
+        function handleStackResolve(pdu) {
+            const itemId = pdu.stack_item_id || '';
+            const result = pdu.result || '';
+            const changes = pdu.state_changes || [];
+
+            if (result === 'FIZZLE') {
+                log(`[stack] ${itemId} fizzles (all targets illegal).`, 'sys');
+            } else {
+                const desc = describeChanges(changes);
+                log(`[stack] ${itemId} resolves: ${desc}`, 'sys');
+            }
+        }
+
+        function describeChanges(changes) {
+            if (!changes || !changes.length) return 'no effect';
+            return changes.map(c => {
+                switch (c.change_type) {
+                    case 'DAMAGE':
+                        return `${c.amount} damage to ${cardName(c.target)}`;
+                    case 'LIFE_GAIN':
+                        return `${c.target} gains ${c.amount} life`;
+                    case 'PUMP':
+                        return `+${c.power}/+${c.toughness} to ${cardName(c.target)}`;
+                    case 'COUNTERED':
+                        return `counters ${c.target}`;
+                    case 'PERMANENT_ENTERS':
+                        return `${cardName(c.card_id)} enters under ${c.controller}'s control`;
+                    case 'DRAW':
+                        return `${c.target} draws ${c.amount}`;
+                    default:
+                        return `${c.change_type}`;
+                }
+            }).join('; ');
+        }
+
+        // =====================================================================
+        // COMBAT DAMAGE
+        // =====================================================================
+        function handleCombatDamage(pdu) {
+            const events = pdu.damage_events || [];
+            const lifeTotals = pdu.life_totals || {};
+            const died = pdu.creatures_died || [];
+
+            if (events.length) {
+                const hits = events.filter(e => e.amount > 0)
+                    .map(e => `${cardName(e.source)} → ${cardName(e.target)} (${e.amount})`)
+                    .join('; ');
+                log(`[combat] ${hits || 'no damage'}`, 'combat');
+            }
+
+            if (died.length) {
+                log(`[combat] Died: ${died.map(c => cardName(c)).join(', ')}`, 'combat');
+            }
+
+            // Update life totals
+            for (const [pid, life] of Object.entries(lifeTotals)) {
+                if (serverState.life_totals) {
+                    serverState.life_totals[pid] = life;
+                }
+            }
+        }
+
+        // =====================================================================
+        // GAME OVER
+        // =====================================================================
+        function handleGameOver(pdu) {
+            const winnerId = pdu.winner_id;
+            const reason = pdu.reason;
+            const isVictory = winnerId === playerId;
+
             document.getElementById('game-screen').classList.add('hidden');
             const go = document.getElementById('game-over-screen');
             go.classList.remove('hidden');
             go.style.display = 'flex';
-            document.getElementById('winner-text').innerText = winner === 'Player1' ? 'VICTORY' : 'DEFEAT';
-            document.getElementById('winner-text').style.color = winner === 'Player1' ? 'var(--accent-gold)' : 'var(--damage-color)';
-            document.getElementById('reason-text').innerText = reason;
-        }
-        
-        // Initial setup
-        document.getElementById('player-name').value = "Hero";
 
+            document.getElementById('winner-text').innerText = isVictory ? 'VICTORY' : 'DEFEAT';
+            document.getElementById('winner-text').style.color =
+                isVictory ? 'var(--accent-gold)' : 'var(--damage-color)';
+            document.getElementById('reason-text').innerText =
+                `${winnerId} wins — ${reason}`;
+        }
+
+        // =====================================================================
+        // TRIGGER HANDLING
+        // =====================================================================
+        function handleTriggerChoice(pdu) {
+            const summary = pdu.effect_summary || 'Unknown trigger';
+            const source = pdu.source_id || '';
+            
+            if (confirm(`Optional trigger from ${cardName(source)}: ${summary}\n\nAccept?`)) {
+                sendPDU({
+                    type: 'TRIGGER_CHOICE_RESPONSE',
+                    seq_num: pdu.seq_num,
+                    trigger_id: pdu.trigger_id,
+                    accept: true,
+                    chosen_target: null
+                });
+            } else {
+                sendPDU({
+                    type: 'TRIGGER_CHOICE_RESPONSE',
+                    seq_num: pdu.seq_num,
+                    trigger_id: pdu.trigger_id,
+                    accept: false,
+                    chosen_target: null
+                });
+            }
+        }
+
+        function handleTriggerOrder(pdu) {
+            // Auto-accept default order for simplicity
+            const triggerIds = pdu.trigger_ids || [];
+            sendPDU({
+                type: 'TRIGGER_ORDER_RESPONSE',
+                seq_num: pdu.seq_num,
+                ordered_trigger_ids: triggerIds
+            });
+            log(`Ordered ${triggerIds.length} simultaneous triggers.`, 'sys');
+        }
+
+        // =====================================================================
+        // ERROR HANDLING
+        // =====================================================================
+        function handleError(pdu) {
+            const code = pdu.code || 'UNKNOWN';
+            const message = pdu.message || '';
+            log(`[ERROR ${code}] ${message}`, 'alert');
+            console.error('Server error:', pdu);
+        }
+
+        // =====================================================================
+        // MULLIGAN SCREEN
+        // =====================================================================
+        function showMulliganScreen(state) {
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('mulligan-screen').classList.remove('hidden');
+
+            const hand = (state.hand || {})[playerId] || [];
+            mulliganCount = state.mulligans || 0;
+
+            document.getElementById('mulligan-info').innerText =
+                `Hand size: ${hand.length} | Mulligans: ${mulliganCount}`;
+
+            // Show bottom info if we need to bottom cards
+            const bottomInfo = document.getElementById('mulligan-bottom-info');
+            if (mulliganCount > 0) {
+                bottomInfo.classList.remove('hidden');
+                bottomInfo.innerText = `Select ${mulliganCount} card(s) to put on the bottom of your library.`;
+                uiMode = 'mulligan_bottom';
+                selectedBottomCards = [];
+            } else {
+                bottomInfo.classList.add('hidden');
+                uiMode = 'normal';
+                selectedBottomCards = [];
+            }
+
+            // Render mulligan hand
+            const container = document.getElementById('mulligan-cards');
+            container.innerHTML = hand.map(cid => {
+                const d = cardDef(cid);
+                if (!d) return '';
+                const base = baseName(cid);
+                const costHtml = getManaHTML(d.cost);
+                return `
+                    <div class="card ${d.kind}" id="mull-${cid}" data-id="${cid}" 
+                         onclick="toggleMulliganCard('${cid}')">
+                        <div class="card-inner">
+                            <div class="card-header">
+                                <span class="card-name">${d.name}</span>
+                                <div class="card-cost">${costHtml}</div>
+                            </div>
+                            <div class="card-art">${getCardArt(base)}</div>
+                            <div class="card-type">${d.kind.toUpperCase()}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update keep button text
+            document.getElementById('btn-keep').innerText =
+                mulliganCount > 0 ? `Keep (Bottom ${mulliganCount})` : 'Keep Hand';
+        }
+
+        function toggleMulliganCard(cardId) {
+            if (mulliganCount === 0) return; // Nothing to select if 0 mulligans
+
+            const idx = selectedBottomCards.indexOf(cardId);
+            if (idx >= 0) {
+                selectedBottomCards.splice(idx, 1);
+                document.getElementById(`mull-${cardId}`).classList.remove('selected');
+            } else if (selectedBottomCards.length < mulliganCount) {
+                selectedBottomCards.push(cardId);
+                document.getElementById(`mull-${cardId}`).classList.add('selected');
+            }
+        }
+
+        function keepHand() {
+            if (mulliganCount > 0 && selectedBottomCards.length !== mulliganCount) {
+                log(`Select exactly ${mulliganCount} card(s) to put on bottom.`, 'alert');
+                return;
+            }
+
+            sendPDU({
+                type: 'MULLIGAN_CHOICE',
+                seq_num: requestToken,
+                keep: true,
+                cards_to_bottom: selectedBottomCards
+            });
+
+            uiMode = 'normal';
+            selectedBottomCards = [];
+
+            document.getElementById('mulligan-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            log('Kept hand.', 'p1');
+        }
+
+        function mulligan() {
+            sendPDU({
+                type: 'MULLIGAN_CHOICE',
+                seq_num: requestToken,
+                keep: false,
+                cards_to_bottom: []
+            });
+            log('Taking a mulligan...', 'p1');
+        }
+
+        // =====================================================================
+        // HEARTBEAT (PING/PONG)
+        // =====================================================================
+        let pingInterval = null;
+        let pingSeq = 0;
+
+        function startHeartbeat() {
+            if (pingInterval) clearInterval(pingInterval);
+            pingInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    pingSeq++;
+                    sendPDU({
+                        type: 'PING',
+                        seq_num: pingSeq,
+                        timestamp: Date.now()
+                    });
+                }
+            }, 30000);
+        }
+
+        // Start heartbeat when connection opens
+        const origOnOpen = null;
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+        document.getElementById('player-name').value = 'Player1';
+
+        // Listen for Enter key in lobby fields
+        document.querySelectorAll('.lobby-box input').forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') connectAndReady();
+            });
+        });
+
+        // Click outside cards to deselect
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.card') && uiMode === 'targeting') {
+                cancelAction();
+            }
+        });
     </script>
 </body>
 </html>
