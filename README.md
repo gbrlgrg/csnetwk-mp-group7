@@ -294,14 +294,14 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/heartbeat.py` | A | Suñga | Debugging and clarifying understanding | Answering the ping |
 | `server/lobby.py` | G | Rebudiao | Implemented the lobby, game setup, and mulligan lifecycle, including player validation, deck validation ready-state updates, disconnect handling, initial draws, first-player selection, and mulligan request handling. | Adjusted the implementation to match the RFC behavior, including deck replacement, request sequence validation, and seat reset handling. |
 | `server/phase_engine.py` | G | Rebudiao | Implemented the turn and phase state machine, including untap, upkeep, draw, main phases, combat transitions, cleanup, land plays, and hand-size enforcement. | Updated the phase logic and validations to follow the RFC, especially priority handling, state broadcasts, request tokens, and turn transitions. |
-| `server/combat.py` | TODO | Barreo | TODO | TODO |
+| `server/combat.py` | G | Barreo | The AI generated the initial structure and logic for the combat system, including attackers, blockers, damage order, first strike, combat damage, and summoning sickness enforcement. | I fixed edge cases, corrected simultaneous damage calculation, and ensured the COMBAT_DAMAGE_RESULT broadcast matches RFC specifications. |
 | `server/card_catalog.py` | G | Gregorio | Needed functions/methods for the file | Implementation of the methods / how to call them |
 | `server/game_state.py` | A | Gregorio | The networking, Lobby, Combat, Stack resolution, Phase engine, Effects, Priority, Transport, and Client | Player state, Permanent management, Stack tracking, and Game-over/Disconnect Exceptions |
 | `server/state_view.py` | A | Gregorio | The data formatting and cleaning the broadcast_state helper | I did everything |
 | `server/priority.py` | A | Gregorio | Error-handling edge cases | I did everything |
 | `server/stack.py` | G | Gregorio | The initial structure and logic, which handles the LIFO stack — spell casting, target validation, stack resolution with fizzle checks, state-based actions, and APNAP trigger ordering |  you then fixed and debugged the edge cases like mana payment validation, sorcery-speed timing checks, and the trigger choice/order flows |
 | `server/effects.py` | G | Gregorio | Debugged Edge Cases like generic mana coverage checks and the countered-spell graveyard handling | I did all of the card effect logic |
-| `client/main.py` | TODO | Barreo | TODO | TODO |
+| `client/main.py` | A | Barreo | The AI helped with boilerplate code for client-server connection, PDU sending/receiving, and verbose mode setup. | I wrote the client implementation, including handling all PDU types, rendering authoritative GAME_STATE_UPDATE, discarding local state, and error handling without crashing. |
 | `server/tests/*.py` | TODO | TODO | TODO | TODO |
 | `shared/cards.json`, `decks/*.txt` | A | All Members | Double-checked correctness of necessary values | We wrote everything |
 | `README.md` | G | all | General formatting of the whole README file | Fixed the TODO markings and grammar. |
