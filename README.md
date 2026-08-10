@@ -35,6 +35,13 @@ project/
 │   └── index.html              # Browser-based GUI client (open in browser, 2 tabs)
 ├── gui_bridge.py               # WebSocket-to-TCP bridge for the GUI — run: python gui_bridge.py
 ├── decks/                      # sample deck lists (one card instance ID per line)
+│   ├── red_aggro.txt           # Red: hasty creatures + burn (40 cards)
+│   ├── green_stompy.txt        # Green: big creatures + pump (28 cards)
+│   ├── burn.txt                # Red: direct damage only (40 cards)
+│   ├── control.txt             # Blue/Black: counters + drain (28 cards)
+│   ├── white_weenie.txt        # White: knights & lions (32 cards)
+│   ├── blue_tempo.txt          # Blue: counter spells + fliers (32 cards)
+│   └── black_aggro.txt         # Black: knights & drain (20 cards)
 ├── requirements.txt            # states that only the Python stdlib is required
 ├── README.md                   # this document (Markdown source)
 └── README.pdf                  # this document (submitted deliverable)

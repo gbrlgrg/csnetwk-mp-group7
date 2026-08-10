@@ -1,0 +1,21 @@
+# Black Aggro — knights & drain (spec-consistent: max 4-of)
+swamp_001
+swamp_002
+swamp_003
+swamp_004
+swamp_005
+swamp_006
+swamp_007
+swamp_008
+swamp_009
+swamp_010
+black_knight_001
+black_knight_002
+black_knight_003
+black_knight_004
+festering_imp_001
+festering_imp_002
+festering_imp_003
+festering_imp_004
+gray_merchant_001
+gray_merchant_002
