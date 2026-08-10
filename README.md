@@ -319,8 +319,8 @@ explanation · **H** = hand-written, no AI involvement.
 ### 6. Member attestation
 
 | Member | Modules I can explain line-by-line | AI tools I personally used |
-|---|---|---|---|
-| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot | TODO |
+|---|---|---|
+| John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO |
