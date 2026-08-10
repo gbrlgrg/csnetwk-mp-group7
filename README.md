@@ -31,6 +31,9 @@ project/
 │   └── cards.json              # shared card catalog (out-of-band card data, RFC §1)
 ├── client/
 │   └── main.py                 # Player Client & rendering — run: python3 -m client.main (Barreo)
+├── gui/
+│   └── index.html              # Browser-based GUI client (open in browser, 2 tabs)
+├── gui_bridge.py               # WebSocket-to-TCP bridge for the GUI — run: python gui_bridge.py
 ├── decks/                      # sample deck lists (one card instance ID per line)
 ├── requirements.txt            # states that only the Python stdlib is required
 ├── README.md                   # this document (Markdown source)
@@ -92,6 +95,47 @@ needed (standard library only).
      `help` — full list
 9. **Game over:** the winner and reason are announced; both clients stay
    connected and can type `ready` to start a new game (RFC 6.6).
+
+### Running the GUI (browser client)
+
+The project includes a browser-based GUI as an alternative to the terminal
+client. It connects to the game server through a WebSocket-to-TCP bridge
+(`gui_bridge.py`).
+
+**Extra prerequisite:** the `websockets` Python package (the only non-stdlib
+dependency in the project).
+
+```
+pip install websockets
+```
+
+1. **Start the game server** (Terminal 1) — same as above:
+   ```
+   python -m server.main
+   ```
+2. **Start the WebSocket bridge** (Terminal 2). It connects to the game
+   server on TCP port 4444 and exposes a WebSocket on port 8765:
+   ```
+   python gui_bridge.py
+   ```
+   You should see `WebSocket bridge starting on ws://0.0.0.0:8765`.
+   Optional flags:
+   * `--host <ip>` — game server IP (default `127.0.0.1`)
+   * `--port <n>` — game server TCP port (default `4444`)
+   * `--ws-port <n>` — WebSocket port for browsers (default `8765`)
+   * `-v` / `--verbose` — log every PDU forwarded through the bridge
+3. **Open the GUI** — open `gui/index.html` in **two browser tabs** (one per
+   player). Each tab is an independent client.
+4. **Connect each tab:** in each tab, set a unique **Player Name** (e.g.
+   `Player1` and `Player2`), choose a deck, and click **Connect & Ready**.
+   The default host (`127.0.0.1`) and port (`8765`) match the bridge
+   defaults.
+5. **Play the game** using the GUI buttons and card clicks. A **shot clock
+   timer** in each player's stats panel shows the remaining time for the
+   active priority holder before the server auto-passes or disconnects them.
+
+> **Tip:** you can mix GUI and terminal clients in the same game — for
+> example, one player in the browser and one in the terminal.
 
 ### Verbose mode (rubric prerequisite)
 
