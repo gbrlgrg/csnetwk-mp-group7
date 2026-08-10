@@ -77,6 +77,10 @@
             background: var(--bg-color);
         }
 
+        #lobby-screen {
+            background: linear-gradient(rgba(10, 14, 26, 0.6), rgba(10, 14, 26, 0.6)), url('bg.jpg') center/cover no-repeat;
+        }
+
         #game-screen {
             z-index: 10;
             display: grid;
@@ -884,6 +888,7 @@
     <div id="lobby-screen" class="screen">
         <div class="glass lobby-box">
             <h1>MTGNP</h1>
+            <div style="text-align: center; color: #aaa; font-size: 0.95em; margin-top: -14px;">Magic: The Gathering Network Protocol</div>
             <div class="input-group">
                 <label>WebSocket Host</label>
                 <input type="text" id="host-ip" value="127.0.0.1">
