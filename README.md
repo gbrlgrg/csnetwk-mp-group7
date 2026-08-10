@@ -302,28 +302,10 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/stack.py` | G | Gregorio | The initial structure and logic, which handles the LIFO stack — spell casting, target validation, stack resolution with fizzle checks, state-based actions, and APNAP trigger ordering |  you then fixed and debugged the edge cases like mana payment validation, sorcery-speed timing checks, and the trigger choice/order flows |
 | `server/effects.py` | G | Gregorio | Debugged Edge Cases like generic mana coverage checks and the countered-spell graveyard handling | I did all of the card effect logic |
 | `client/main.py` | A | Barreo | The AI helped with boilerplate code for client-server connection, PDU sending/receiving, and verbose mode setup. | I wrote the client implementation, including handling all PDU types, rendering authoritative GAME_STATE_UPDATE, discarding local state, and error handling without crashing. |
-| `server/tests/*.py` | TODO | TODO | TODO | TODO |
 | `shared/cards.json`, `decks/*.txt` | A | All Members | Double-checked correctness of necessary values | We wrote everything |
 | `README.md` | G | all | General formatting of the whole README file | Fixed the TODO markings and grammar. |
 
-### 4. What was **not** AI-generated
-
-* Interpretation of RFC 0001 and the deviations in *Known
-  deviations / interpretations* above
-* Deck construction in `decks/` and card balance in `cards.json`
-
-### 5. Verification performed
-
-| Check | Done by | Result |
-|---|---|---|
-| Ran all 4 unit test files | TODO | TODO e.g. all pass |
-| Ran all 3 integration test files (31 assertions) | TODO | TODO |
-| Manual 2-client game to `GAME_OVER`, both win conditions | TODO | TODO |
-| Verbose PDU logs checked against RFC 0001 §5 framing | TODO | TODO |
-| Error paths exercised (`INVALID_JSON`, `STALE_ACTION`, `ILLEGAL_DECK`, `INSUFFICIENT_MANA`) | TODO | TODO |
-| Line-by-line walkthrough of AI-drafted code by its owner | All members | All pass |
-
-### 6. Member attestation
+### 4. Member attestation
 
 | Member | Modules I can explain line-by-line | AI tools I personally used |
 |---|---|---|
