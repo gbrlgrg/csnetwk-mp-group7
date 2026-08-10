@@ -330,4 +330,4 @@ explanation · **H** = hand-written, no AI involvement.
 | John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot |
 | Daniel Rebudiao | `lobby.py`, `phase_engine.py` | Claude, Big Pickle |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT |
-| Carlo Barreo | `combat.py`, `client/main.py` | TODO |
+| Carlo Barreo | `combat.py`, `client/main.py` | DeepSeek |
