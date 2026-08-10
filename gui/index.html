@@ -781,23 +781,100 @@
             50% { box-shadow: 0 0 20px rgba(201,168,76,0.8); }
         }
 
-        /* Graveyard tooltip */
+        /* Graveyard tooltip (fixed-position so it renders above cards/panels) */
         .grave-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
+            position: fixed;
+            z-index: 1000;
             background: rgba(0,0,0,0.95);
             border: 1px solid #555;
             border-radius: 6px;
             padding: 8px;
             max-width: 200px;
             font-size: 0.75em;
-            z-index: 60;
-            display: none;
+            white-space: pre-line;
+            pointer-events: none;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.7);
         }
-        .deck-grave div:hover .grave-tooltip {
-            display: block;
+
+        /* Suggestion Helper (clickable character on the left side) */
+        #suggestion-helper {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #3a3f5c, #151a2e);
+            border: 2px solid var(--accent-gold);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            z-index: 900;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #suggestion-helper:hover { transform: translateY(-50%) scale(1.08); }
+        #suggestion-helper:active { transform: translateY(-50%) scale(0.95); }
+
+        #suggestion-helper .suggestion-label {
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.42em;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            white-space: nowrap;
+            color: var(--accent-gold);
+            text-shadow: 0 1px 2px #000;
+            background: rgba(10,14,26,0.9);
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+
+        #suggestion-helper.active {
+            animation: helperPulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes helperPulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(201,168,76,0.35), 0 4px 12px rgba(0,0,0,0.6); }
+            50% { box-shadow: 0 0 22px rgba(201,168,76,0.9), 0 4px 12px rgba(0,0,0,0.6); }
+        }
+
+        #suggestion-bubble {
+            position: fixed;
+            left: 64px;
+            top: 50%;
+            transform: translateY(-50%);
+            max-width: 260px;
+            background: rgba(20, 24, 40, 0.97);
+            border: 1px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.85em;
+            line-height: 1.45;
+            color: #eaeaea;
+            z-index: 901;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+        }
+        #suggestion-bubble::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 8px solid transparent;
+            border-right-color: var(--accent-gold);
+        }
+        #suggestion-bubble .suggestion-title {
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+            font-size: 0.9em;
         }
 
         /* Shot Clock Timer */
@@ -961,9 +1038,7 @@
             <div class="deck-grave">
                 <div>Hand <span id="opp-hand-count">7</span></div>
                 <div>Deck <span id="opp-deck-count">40</span></div>
-                <div style="position:relative; cursor:help;">Grave <span id="opp-grave-count">0</span>
-                    <div class="grave-tooltip" id="opp-grave-tooltip">Empty</div>
-                </div>
+                <div style="position:relative; cursor:help;" data-grave="opp">Grave <span id="opp-grave-count">0</span></div>
             </div>
             <div class="life-total">❤️ <span id="opp-life">20</span></div>
             <div class="shot-clock inactive" id="opp-shot-clock">
@@ -1025,9 +1100,7 @@
             <div class="deck-grave">
                 <div>Hand <span id="player-hand-count">7</span></div>
                 <div>Deck <span id="player-deck-count">33</span></div>
-                <div style="position:relative; cursor:help;">Grave <span id="player-grave-count">0</span>
-                    <div class="grave-tooltip" id="player-grave-tooltip">Empty</div>
-                </div>
+                <div style="position:relative; cursor:help;" data-grave="player">Grave <span id="player-grave-count">0</span></div>
             </div>
             <div class="avatar-area">
                 <div>
@@ -1059,6 +1132,19 @@
         <div class="winner-text" id="winner-text">VICTORY</div>
         <div class="reason-text" id="reason-text">Opponent's life reached 0</div>
         <button onclick="location.reload()" style="margin-top: 20px;">Play Again</button>
+    </div>
+
+    <!-- Global Graveyard Tooltip (fixed so it renders above everything) -->
+    <div id="grave-tooltip" class="grave-tooltip hidden"></div>
+
+    <!-- Suggestion Helper Character -->
+    <div id="suggestion-helper" class="hidden" onclick="toggleSuggestion()" title="Get a tip">
+        🧙
+        <span class="suggestion-label">TIP</span>
+    </div>
+    <div id="suggestion-bubble" class="hidden">
+        <div class="suggestion-title">Your Turn Tip</div>
+        <div id="suggestion-text">Click me for a suggestion on what to do next!</div>
     </div>
 
     <script>
@@ -1191,6 +1277,7 @@
         let hasPriority = false;    // whether we currently hold priority
         let serverState = {};       // last GAME_STATE_UPDATE state object
         let mulliganCount = 0;     // local mulligan tracker
+        let lastGraves = { player: [], opp: [] };  // last graveyard contents for tooltip
 
         // UI interaction state
         let uiMode = 'normal';     // normal, targeting, attacking, blocking, discarding, mulligan_bottom
@@ -1578,10 +1665,7 @@
             const oppGrave = graveyards[oppId] || [];
             document.getElementById('player-grave-count').innerText = playerGrave.length;
             document.getElementById('opp-grave-count').innerText = oppGrave.length;
-            document.getElementById('player-grave-tooltip').innerText =
-                playerGrave.length ? playerGrave.map(c => cardName(c)).join('\n') : 'Empty';
-            document.getElementById('opp-grave-tooltip').innerText =
-                oppGrave.length ? oppGrave.map(c => cardName(c)).join('\n') : 'Empty';
+            lastGraves = { player: playerGrave, opp: oppGrave };
 
             // Turn indicator
             const isMyTurn = state.active_player === playerId;
@@ -1652,6 +1736,14 @@
 
             // Attach click listeners
             attachCardListeners();
+
+            // Show/refresh the suggestion helper
+            document.getElementById('suggestion-helper').classList.remove('hidden');
+            updateSuggestionHelper();
+            const bubble = document.getElementById('suggestion-bubble');
+            if (!bubble.classList.contains('hidden')) {
+                document.getElementById('suggestion-text').innerText = getSuggestion();
+            }
         }
 
         function computeAvailableMana(perms) {
@@ -2160,6 +2252,7 @@
             log(`You have priority (${timeLimit}s).`, 'alert');
             startShotClock(timeLimitMs, true);
             updateActionButtons(serverState);
+            updateSuggestionHelper();
         }
 
         // =====================================================================
@@ -2303,6 +2396,8 @@
         // =====================================================================
         function handleGameOver(pdu) {
             deactivateBothClocks();
+            document.getElementById('suggestion-helper').classList.add('hidden');
+            document.getElementById('suggestion-bubble').classList.add('hidden');
             const winnerId = pdu.winner_id;
             const reason = pdu.reason;
             const isVictory = winnerId === playerId;
@@ -2373,6 +2468,147 @@
 
             log(`[ERROR ${code}] ${message}`, 'alert');
             console.error('Server error:', pdu);
+        }
+
+        // =====================================================================
+        // SUGGESTION HELPER & GRAVE TOOLTIP
+        // =====================================================================
+        function canAfford(cardId) {
+            const d = cardDef(cardId);
+            if (!d || !d.cost) return true;
+            const cost = d.cost;
+            const myPerms = (serverState.battlefield || {})[playerId] || [];
+            const avail = {};
+            for (const p of myPerms) {
+                const pd = cardDef(p.id);
+                if (pd && pd.kind === 'land' && !p.tapped && pd.produces) {
+                    avail[pd.produces] = (avail[pd.produces] || 0) + 1;
+                }
+            }
+            for (const [color, n] of Object.entries(cost)) {
+                if (color === 'X') continue;
+                if ((avail[color] || 0) < n) return false;
+                avail[color] -= n;
+            }
+            let total = 0;
+            for (const c in avail) total += avail[c];
+            return total >= (cost.X || 0);
+        }
+
+        function getSuggestion() {
+            if (!serverState || !serverState.phase) {
+                return 'Connect to a game first, then I can give you tips!';
+            }
+            const phase = serverState.phase;
+            const isMyTurn = serverState.active_player === playerId;
+            const hand = (serverState.hand || {})[playerId] || [];
+
+            if (phase === 'MULLIGAN') {
+                return mulliganCount > 0
+                    ? `Select ${mulliganCount} card(s) to put on the bottom of your library, then press "Keep".`
+                    : 'Keep your opening hand or press "Mulligan" to redraw one fewer card.';
+            }
+
+            if (uiMode === 'discarding') {
+                const needed = Math.max(0, hand.length - 7);
+                return `Your hand is too big — select ${needed} card(s) to discard down to 7.`;
+            }
+
+            if (phase === 'DECLARE_ATTACKERS' && isMyTurn) {
+                if (pendingAttackers.length) {
+                    return `You've selected ${pendingAttackers.length} attacker(s) — press "Confirm Attackers" when ready.`;
+                }
+                return 'Combat step! Click creatures to attack with, then press "Confirm Attackers" (or press it with none selected to skip).';
+            }
+
+            if (phase === 'DECLARE_BLOCKERS' && !isMyTurn) {
+                if (blockingCreature) {
+                    return 'Now click an attacking creature for your selected creature to block.';
+                }
+                return 'The opponent is attacking! Click one of your creatures, then an attacking creature to block it.';
+            }
+
+            if (!hasPriority) {
+                return isMyTurn
+                    ? "It's your turn, but you don't have priority yet — wait a moment for it."
+                    : "Waiting on the opponent's turn... you'll get priority when they pass or when you can respond.";
+            }
+
+            const landInHand = hand.some(c => cardDef(c)?.kind === 'land');
+            if (landInHand && !serverState.land_played_this_turn) {
+                return 'You haven\'t played a land this turn — click a land in your hand to play it and grow your mana.';
+            }
+
+            const castable = hand.find(cid => {
+                const d = cardDef(cid);
+                if (!d || d.kind === 'land') return false;
+                return canAfford(cid);
+            });
+            if (castable) {
+                const d = cardDef(castable);
+                let extra = '';
+                if (d.targets_stack) extra = ', then click a spell on the stack to counter';
+                else if (d.targets_creature) extra = ', then click a creature to target';
+                else if (d.needs_target) extra = ', then pick a target (or use the Target buttons)';
+                return `You can afford to cast ${d.name} — click it in your hand${extra}.`;
+            }
+
+            if (isMyTurn) {
+                return 'Nothing left to play this turn — press "Pass Priority" to move the game forward.';
+            }
+            return 'You have priority — cast an instant to respond if you want, otherwise press "Pass Priority".';
+        }
+
+        function updateSuggestionHelper() {
+            const helper = document.getElementById('suggestion-helper');
+            if (!helper || !serverState) return;
+            const phase = serverState.phase || '';
+            const isMyTurn = serverState.active_player === playerId;
+            const attention =
+                phase === 'MULLIGAN' ||
+                uiMode === 'discarding' ||
+                (phase === 'DECLARE_ATTACKERS' && isMyTurn) ||
+                (phase === 'DECLARE_BLOCKERS' && !isMyTurn) ||
+                (hasPriority && isMyTurn);
+            helper.classList.toggle('active', attention);
+        }
+
+        function toggleSuggestion() {
+            const bubble = document.getElementById('suggestion-bubble');
+            if (bubble.classList.contains('hidden')) {
+                document.getElementById('suggestion-text').innerText = getSuggestion();
+                bubble.classList.remove('hidden');
+            } else {
+                bubble.classList.add('hidden');
+            }
+        }
+
+        function bindGraveTooltips() {
+            document.querySelectorAll('[data-grave]').forEach(el => {
+                el.addEventListener('mouseenter', showGraveTooltip);
+                el.addEventListener('mouseleave', hideGraveTooltip);
+            });
+        }
+
+        function showGraveTooltip(e) {
+            const el = e.currentTarget;
+            const grave = lastGraves[el.dataset.grave] || [];
+            const tooltip = document.getElementById('grave-tooltip');
+            tooltip.innerText = grave.length ? grave.map(c => cardName(c)).join('\n') : 'Empty';
+            tooltip.classList.remove('hidden');
+            const rect = el.getBoundingClientRect();
+            const tw = tooltip.offsetWidth;
+            const th = tooltip.offsetHeight;
+            let x = Math.round(rect.left + rect.width / 2 - tw / 2);
+            x = Math.max(4, Math.min(x, window.innerWidth - tw - 4));
+            let y = Math.round(rect.top - th - 8);
+            if (y < 4) y = Math.round(rect.bottom + 8);
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+        }
+
+        function hideGraveTooltip() {
+            document.getElementById('grave-tooltip').classList.add('hidden');
         }
 
         // =====================================================================
@@ -2500,6 +2736,9 @@
         // =====================================================================
         document.getElementById('player-name').value = 'Player1';
 
+        // Bind graveyard tooltips
+        bindGraveTooltips();
+
         // Collapse the opponent hand by default to save screen space
         document.getElementById('opp-hand-zone').classList.add('collapsed');
 
@@ -2514,6 +2753,10 @@
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.card') && uiMode === 'targeting') {
                 cancelAction();
+            }
+            // Clicking outside the helper closes the suggestion bubble
+            if (!e.target.closest('#suggestion-helper')) {
+                document.getElementById('suggestion-bubble').classList.add('hidden');
             }
         });
     </script>
