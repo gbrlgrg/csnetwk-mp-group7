@@ -738,6 +738,81 @@
         .deck-grave div:hover .grave-tooltip {
             display: block;
         }
+
+        /* Shot Clock Timer */
+        .shot-clock {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .shot-clock svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .shot-clock-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 3;
+        }
+
+        .shot-clock-ring {
+            fill: none;
+            stroke: var(--accent-gold);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 113;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.9s linear, stroke 0.5s ease;
+        }
+
+        .shot-clock-ring.warning {
+            stroke: #e67e22;
+        }
+
+        .shot-clock-ring.critical {
+            stroke: var(--damage-color);
+            animation: clockPulse 0.6s ease-in-out infinite;
+        }
+
+        .shot-clock-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72em;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        .shot-clock-text.warning {
+            color: #e67e22;
+        }
+
+        .shot-clock-text.critical {
+            color: var(--damage-color);
+            animation: clockPulse 0.6s ease-in-out infinite;
+        }
+
+        .shot-clock.inactive {
+            opacity: 0.25;
+        }
+
+        .shot-clock.inactive .shot-clock-text {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes clockPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.08); }
+        }
     </style>
 </head>
 <body>
@@ -826,6 +901,13 @@
                 </div>
             </div>
             <div class="life-total">❤️ <span id="opp-life">20</span></div>
+            <div class="shot-clock inactive" id="opp-shot-clock">
+                <svg viewBox="0 0 40 40">
+                    <circle class="shot-clock-bg" cx="20" cy="20" r="18"></circle>
+                    <circle class="shot-clock-ring" id="opp-clock-ring" cx="20" cy="20" r="18"></circle>
+                </svg>
+                <div class="shot-clock-text" id="opp-clock-text">—</div>
+            </div>
         </div>
 
         <div class="opponent-hand" id="opp-hand"></div>
@@ -848,6 +930,13 @@
         <div class="hand" id="player-hand"></div>
 
         <div class="stats-panel glass" id="player-stats">
+            <div class="shot-clock inactive" id="player-shot-clock">
+                <svg viewBox="0 0 40 40">
+                    <circle class="shot-clock-bg" cx="20" cy="20" r="18"></circle>
+                    <circle class="shot-clock-ring" id="player-clock-ring" cx="20" cy="20" r="18"></circle>
+                </svg>
+                <div class="shot-clock-text" id="player-clock-text">—</div>
+            </div>
             <div class="life-total">❤️ <span id="player-life">20</span></div>
             <div class="mana-pool" id="player-mana"><span class="mana-label">Mana</span></div>
             <div class="board-stats">
@@ -983,6 +1072,89 @@
         let selectedBottomCards = []; // cards selected to put on bottom (mulligan)
         let discardSelection = [];  // cards selected for discard
 
+        // Shot clock state
+        let shotClockInterval = null;  // setInterval handle
+        let shotClockRemaining = 0;    // seconds left
+        let shotClockTotal = 60;       // total seconds (from time_limit_ms)
+        const CIRCUMFERENCE = 2 * Math.PI * 18; // ~113.1 for r=18
+
+        // =====================================================================
+        // SHOT CLOCK FUNCTIONS
+        // =====================================================================
+        function startShotClock(timeLimitMs, isPlayer) {
+            stopShotClock(); // clear any existing timer
+            shotClockTotal = Math.round(timeLimitMs / 1000);
+            shotClockRemaining = shotClockTotal;
+
+            const prefix = isPlayer ? 'player' : 'opp';
+            const otherPrefix = isPlayer ? 'opp' : 'player';
+
+            // Activate the holder's clock, deactivate the other
+            document.getElementById(`${prefix}-shot-clock`).classList.remove('inactive');
+            document.getElementById(`${otherPrefix}-shot-clock`).classList.add('inactive');
+            resetClockDisplay(otherPrefix);
+
+            updateShotClockDisplay(prefix);
+
+            shotClockInterval = setInterval(() => {
+                shotClockRemaining--;
+                if (shotClockRemaining < 0) shotClockRemaining = 0;
+                updateShotClockDisplay(prefix);
+                if (shotClockRemaining <= 0) {
+                    stopShotClock();
+                }
+            }, 1000);
+        }
+
+        function stopShotClock() {
+            if (shotClockInterval) {
+                clearInterval(shotClockInterval);
+                shotClockInterval = null;
+            }
+        }
+
+        function resetClockDisplay(prefix) {
+            const ring = document.getElementById(`${prefix}-clock-ring`);
+            const text = document.getElementById(`${prefix}-clock-text`);
+            ring.style.strokeDashoffset = '0';
+            ring.classList.remove('warning', 'critical');
+            text.classList.remove('warning', 'critical');
+            text.textContent = '\u2014';
+        }
+
+        function deactivateBothClocks() {
+            stopShotClock();
+            ['player', 'opp'].forEach(prefix => {
+                document.getElementById(`${prefix}-shot-clock`).classList.add('inactive');
+                resetClockDisplay(prefix);
+            });
+        }
+
+        function updateShotClockDisplay(prefix) {
+            const ring = document.getElementById(`${prefix}-clock-ring`);
+            const text = document.getElementById(`${prefix}-clock-text`);
+
+            // Update text
+            text.textContent = shotClockRemaining;
+
+            // Update ring: stroke-dashoffset goes from 0 (full) to CIRCUMFERENCE (empty)
+            const fraction = shotClockTotal > 0 ? shotClockRemaining / shotClockTotal : 0;
+            const offset = CIRCUMFERENCE * (1 - fraction);
+            ring.style.strokeDashoffset = offset;
+
+            // Color states
+            ring.classList.remove('warning', 'critical');
+            text.classList.remove('warning', 'critical');
+
+            if (shotClockRemaining <= 5) {
+                ring.classList.add('critical');
+                text.classList.add('critical');
+            } else if (shotClockRemaining <= 15) {
+                ring.classList.add('warning');
+                text.classList.add('warning');
+            }
+        }
+
         // =====================================================================
         // UTILITY FUNCTIONS
         // =====================================================================
@@ -1103,6 +1275,7 @@
             ws.onclose = () => {
                 setConnectionStatus('disconnected', 'Disconnected');
                 hasPriority = false;
+                deactivateBothClocks();
                 console.log('WebSocket closed');
             };
 
@@ -1766,6 +1939,7 @@
                 seq_num: priorityToken
             });
             hasPriority = false;
+            deactivateBothClocks();
             updateActionButtons(serverState);
             log('Passed priority.', 'sys');
         }
@@ -1828,6 +2002,7 @@
                     player_id: playerId
                 });
                 log('You conceded.', 'alert');
+                deactivateBothClocks();
             }
         }
 
@@ -1837,8 +2012,10 @@
         function handlePriorityGrant(pdu) {
             priorityToken = pdu.seq_num;
             hasPriority = true;
-            const timeLimit = (pdu.time_limit_ms || 60000) / 1000;
+            const timeLimitMs = pdu.time_limit_ms || 60000;
+            const timeLimit = timeLimitMs / 1000;
             log(`You have priority (${timeLimit}s).`, 'alert');
+            startShotClock(timeLimitMs, true);
             updateActionButtons(serverState);
         }
 
@@ -1853,6 +2030,12 @@
             if (to === 'UPKEEP') {
                 const who = pdu.active_player === playerId ? 'Your turn' : `${pdu.active_player}'s turn`;
                 log(`━━━ Turn ${pdu.turn}: ${who} ━━━`, 'alert');
+                // Start the opponent's estimated shot clock at turn start if it's their turn
+                if (pdu.active_player !== playerId) {
+                    startShotClock(shotClockTotal * 1000 || 60000, false);
+                } else {
+                    deactivateBothClocks();
+                }
             }
 
             if (to === 'DECLARE_ATTACKERS') {
@@ -1976,6 +2159,7 @@
         // GAME OVER
         // =====================================================================
         function handleGameOver(pdu) {
+            deactivateBothClocks();
             const winnerId = pdu.winner_id;
             const reason = pdu.reason;
             const isVictory = winnerId === playerId;
