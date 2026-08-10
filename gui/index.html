@@ -400,6 +400,63 @@
         }
         .card-back:first-child { margin-left: 0; }
 
+        /* Collapsible Hand Zones */
+        .hand-zone {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .zone-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 4px 10px;
+            font-size: 0.72em;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px 6px 0 0;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .zone-header:hover {
+            color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .zone-count {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1px 8px;
+            font-size: 0.9em;
+        }
+
+        .zone-chevron {
+            transition: transform 0.2s;
+            font-size: 0.9em;
+        }
+
+        .hand-zone.collapsed .zone-chevron {
+            transform: rotate(-90deg);
+        }
+
+        .hand-zone.collapsed .hand,
+        .hand-zone.collapsed .opponent-hand {
+            display: none;
+        }
+
+        .hand-zone .hand,
+        .hand-zone .opponent-hand {
+            border-radius: 0 0 8px 8px;
+        }
+
         /* Card Styling */
         .card {
             width: var(--card-w);
@@ -910,7 +967,14 @@
             </div>
         </div>
 
-        <div class="opponent-hand" id="opp-hand"></div>
+        <div class="hand-zone" id="opp-hand-zone">
+            <div class="zone-header" onclick="toggleZone('opp-hand-zone')">
+                <span>Opponent Hand</span>
+                <span class="zone-count" id="opp-hand-zone-count">0</span>
+                <span class="zone-chevron">▾</span>
+            </div>
+            <div class="opponent-hand" id="opp-hand"></div>
+        </div>
 
         <div class="center-scroll">
             <svg class="svg-overlay" id="arrows-layer"></svg>
@@ -927,7 +991,14 @@
             </div>
         </div>
 
-        <div class="hand" id="player-hand"></div>
+        <div class="hand-zone" id="player-hand-zone">
+            <div class="zone-header" onclick="toggleZone('player-hand-zone')">
+                <span>Your Hand</span>
+                <span class="zone-count" id="player-hand-zone-count">0</span>
+                <span class="zone-chevron">▾</span>
+            </div>
+            <div class="hand" id="player-hand"></div>
+        </div>
 
         <div class="stats-panel glass" id="player-stats">
             <div class="shot-clock inactive" id="player-shot-clock">
@@ -1191,6 +1262,10 @@
             el.querySelector('span').textContent = text;
         }
 
+        function toggleZone(zoneId) {
+            document.getElementById(zoneId).classList.toggle('collapsed');
+        }
+
         function getManaHTML(cost) {
             if (!cost) return '';
             let html = '';
@@ -1429,6 +1504,8 @@
             document.getElementById('player-deck-count').innerText = libCounts[playerId] || 0;
             document.getElementById('opp-deck-count').innerText = libCounts[oppId] || 0;
             document.getElementById('opp-hand-count').innerText = handCounts[oppId] || 0;
+            document.getElementById('opp-hand-zone-count').innerText = handCounts[oppId] || 0;
+            document.getElementById('player-hand-zone-count').innerText = hand.length;
 
             // Graveyard
             const playerGrave = graveyards[playerId] || [];
@@ -2356,6 +2433,9 @@
         // INITIALIZATION
         // =====================================================================
         document.getElementById('player-name').value = 'Player1';
+
+        // Collapse the opponent hand by default to save screen space
+        document.getElementById('opp-hand-zone').classList.add('collapsed');
 
         // Listen for Enter key in lobby fields
         document.querySelectorAll('.lobby-box input').forEach(input => {
