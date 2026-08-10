@@ -285,8 +285,8 @@ explanation · **H** = hand-written, no AI involvement.
 | `server/main.py` | G | Suñga | Generating of pseudocode for needed functions, Help in unfamiliar processes, Argument parser help, Debugging | Writing of the functions |
 | `server/transport.py` | G | Suñga | Generating logical flow for each needed functions, Help in PDU formatting when verbose is on, Explanation of unfamiliar error classes, Help in nuances of threading, Triple-checking of legal C->S PDU types | Writing of some functions, Improvements of bugged lines, Double-checking of legal C->S PDU types |
 | `server/heartbeat.py` | A | Suñga | Debugging and clarifying understanding | Answering the ping |
-| `server/lobby.py` | TODO | Rebudiao | TODO | TODO |
-| `server/phase_engine.py` | TODO | Rebudiao | TODO | TODO |
+| `server/lobby.py` | G | Rebudiao | Implemented the lobby, game setup, and mulligan lifecycle, including player validation, deck validation ready-state updates, disconnect handling, initial draws, first-player selection, and mulligan request handling. | Adjusted the implementation to match the RFC behavior, including deck replacement, request sequence validation, and seat reset handling. |
+| `server/phase_engine.py` | G | Rebudiao | Implemented the turn and phase state machine, including untap, upkeep, draw, main phases, combat transitions, cleanup, land plays, and hand-size enforcement. | Updated the phase logic and validations to follow the RFC, especially priority handling, state broadcasts, request tokens, and turn transitions. |
 | `server/combat.py` | TODO | Barreo | TODO | TODO |
 | `server/card_catalog.py` | G | Gregorio | Needed functions/methods for the file | Implementation of the methods / how to call them |
 | `server/game_state.py` | A | Gregorio | The networking, Lobby, Combat, Stack resolution, Phase engine, Effects, Priority, Transport, and Client | Player state, Permanent management, Stack tracking, and Game-over/Disconnect Exceptions |
@@ -321,6 +321,6 @@ explanation · **H** = hand-written, no AI involvement.
 | Member | Modules I can explain line-by-line | AI tools I personally used |
 |---|---|---|
 | John Lloyd Suñga | `main.py`, `transport.py`, `heartbeat.py` | Claude, GitHub Copilot |
-| Daniel Rebudiao | `lobby.py`, `phase_engine.py` | TODO |
+| Daniel Rebudiao | `lobby.py`, `phase_engine.py` | Claude, Big Pickle |
 | Gaibril Gregorio | `card_catalog.py`, `game_state.py`, `state_view.py`, `priority.py`, `stack.py`, `effects.py` | Claude, ChatGPT |
 | Carlo Barreo | `combat.py`, `client/main.py` | TODO |
