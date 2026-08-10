@@ -4,7 +4,7 @@ CSNETWK Machine Problem — implementation of RFC 0001 (MTGNP v1.0).
 
 ## Demonstration and Gameplay Video
 
-Watch our demonstration and gameplay video here: [https://drive.google.com/drive/folders/1nWk_jC-yXjDDTInRrVEfQos8iDjgP5Ge?usp=sharing]
+Watch our demonstration and gameplay video here: https://drive.google.com/drive/folders/1nWk_jC-yXjDDTInRrVEfQos8iDjgP5Ge?usp=sharing
 
 ## Project structure
 
