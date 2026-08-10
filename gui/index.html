@@ -2219,6 +2219,15 @@
         function handleError(pdu) {
             const code = pdu.code || 'UNKNOWN';
             const message = pdu.message || '';
+
+            // Surface lobby-phase errors on the lobby screen
+            if (code === 'DUPLICATE_ID' || code === 'ILLEGAL_DECK') {
+                const lobbyStatus = document.getElementById('lobby-status');
+                lobbyStatus.innerText = `⚠ ${message}`;
+                lobbyStatus.style.color = '#e74c3c';
+                document.getElementById('btn-connect').disabled = false;
+            }
+
             log(`[ERROR ${code}] ${message}`, 'alert');
             console.error('Server error:', pdu);
         }
